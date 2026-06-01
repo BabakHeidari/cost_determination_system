@@ -1,0 +1,663 @@
+{% extends "base.html" %}
+{% block content %}
+
+<button class="btn btn-secondary mb-3" onclick="history.back()">Back</button>
+
+<div class="page-container">
+
+<h2>Subfield: {{Subfield}} </h2>
+
+<input id="searchInput" type="text" placeholder="" style="margin-bottom:15px;">
+
+<div id="filtersContainer" class="dropdown-filters"></div>
+
+<div class="table-wrapper">
+<table id="dataTable">
+<thead>
+<tr id="tableHeader"></tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
+
+<div style="margin-top:20px; display:flex; gap:15px;">
+<div class="button-bar">
+    <button class="btn btn-add" id="addColumnBtn">Add Column</button>
+    <button class="btn btn-add" id="addRowBtn">Add Row</button>
+    <button class="btn btn-save" id="saveBtn">Save</button>
+</div>
+
+</div>
+
+</div>
+
+
+<script>
+
+// ===== DATA FROM FLASK =====
+const tableJSON = {{ table_json | safe }};
+
+// headers follow _order exactly
+let headers = [...tableJSON._order];
+
+
+// convert column data -> row objects
+function buildRows(){
+
+    const rows = [];
+    const data = tableJSON.data;
+
+    const rowCount = data[headers[0]].length;
+
+    for(let i=0;i<rowCount;i++){
+
+        const row = {};
+
+        headers.forEach(h=>{
+            row[h] = data[h][i];
+        });
+
+        rows.push(row);
+    }
+
+    return rows;
+}
+
+let rows = buildRows();
+
+const searchColumn = headers[1];
+
+document.getElementById("searchInput").placeholder = "Search " + searchColumn;
+
+
+// ===== FILTER STATE =====
+let filters = {};
+headers.slice(1).forEach(c => filters[c] = []);
+
+
+// ===== DOM =====
+const tbody = document.querySelector("#dataTable tbody");
+const thead = document.getElementById("tableHeader");
+const filterBox = document.getElementById("filtersContainer");
+
+
+// ===== BUILD TABLE =====
+function buildTable(){
+
+thead.innerHTML="";
+tbody.innerHTML="";
+
+// headers
+headers.forEach((h,i)=>{
+
+const th=document.createElement("th");
+
+const span=document.createElement("span");
+
+// disable header editing for columns 2,3,4
+if([0, 1].includes(i)){
+    span.contentEditable=false;
+}else{
+    span.contentEditable=true;
+}
+
+span.innerText=h;
+
+span.onblur=()=>{
+
+const oldName = headers[i];
+const newName = span.innerText.trim();
+
+if(!newName || oldName === newName) return;
+
+headers[i] = newName;
+
+// rename key in rows
+rows.forEach(r=>{
+r[newName] = r[oldName];
+delete r[oldName];
+});
+
+// rename filter state
+filters[newName] = filters[oldName] || [];
+delete filters[oldName];
+
+buildTable();
+
+};
+
+th.appendChild(span);
+
+
+// disable delete button for columns 1,2,4
+if(![0,1].includes(i)){
+
+const del=document.createElement("button");
+del.innerText="X";
+del.className="delete-btn";
+del.onclick=()=>removeColumn(i);
+
+th.appendChild(del);
+
+}
+
+thead.appendChild(th);
+
+});
+
+
+// delete column header
+const delHead = document.createElement("th");
+delHead.innerText = "Delete";
+thead.appendChild(delHead);
+
+// view column header
+const viewHead = document.createElement("th");
+viewHead.innerText = "View";
+thead.appendChild(viewHead);
+
+
+buildFilters();
+renderTable();
+
+}
+
+
+// ===== FILTER UI =====
+function buildFilters(){
+
+filterBox.innerHTML="";
+
+headers.slice(1).forEach(col=>{
+
+const dropdown=document.createElement("div");
+dropdown.className="dropdown";
+
+dropdown.innerHTML=`
+<button class="dropbtn">${col} ▾</button>
+<div class="dropdown-content" id="drop_${col}"></div>
+`;
+
+filterBox.appendChild(dropdown);
+
+const container=document.getElementById(`drop_${col}`);
+
+const unique=[...new Set(rows.map(r=>r[col]))];
+
+const all=document.createElement("div");
+all.innerHTML=`
+<label>
+<input type="checkbox"
+data-col="${col}"
+data-val="__all__"
+class="filter-checkbox"
+checked>
+All
+</label>`;
+container.appendChild(all);
+
+unique.forEach(v=>{
+
+const d=document.createElement("div");
+
+d.innerHTML=`
+<label>
+<input type="checkbox"
+data-col="${col}"
+data-val="${v}"
+class="filter-checkbox">
+${v}
+</label>`;
+
+container.appendChild(d);
+
+});
+
+});
+
+}
+
+
+// ===== FILTER LOGIC =====
+document.addEventListener("change",e=>{
+
+if(!e.target.classList.contains("filter-checkbox")) return;
+
+const col=e.target.dataset.col;
+const val=e.target.dataset.val;
+
+if(val==="__all__"){
+
+filters[col]=[];
+
+document.querySelectorAll(`input[data-col="${col}"]`)
+.forEach(cb=>cb.checked=(cb.dataset.val==="__all__"));
+
+}else{
+
+document.querySelector(`input[data-col="${col}"][data-val="__all__"]`).checked=false;
+
+if(filters[col].includes(val))
+filters[col]=filters[col].filter(v=>v!==val);
+else
+filters[col].push(val);
+
+if(filters[col].length===0)
+document.querySelector(`input[data-col="${col}"][data-val="__all__"]`).checked=true;
+
+}
+
+renderTable();
+
+});
+
+
+// ===== FILTERING =====
+function getFiltered(){
+
+const text=document.getElementById("searchInput").value.toLowerCase();
+
+return rows.filter(r=>{
+
+if(text && !String(r[searchColumn]).toLowerCase().includes(text))
+return false;
+
+for(let c of headers.slice(1)){
+
+const active=filters[c];
+
+if(active.length===0) continue;
+
+if(!active.includes(r[c])) return false;
+
+}
+
+return true;
+
+});
+
+}
+
+
+// ===== PAGINATION =====
+let currentPage=1;
+const rowsPerPage=10;
+
+
+// ===== RENDER =====
+function renderTable(){
+
+tbody.innerHTML="";
+
+const data=getFiltered();
+
+const start=(currentPage-1)*rowsPerPage;
+const end=start+rowsPerPage;
+
+data.slice(start,end).forEach((row,rowIndex)=>{
+
+const tr=document.createElement("tr");
+
+headers.forEach(h=>{
+
+const td=document.createElement("td");
+
+td.contentEditable=true;
+td.innerText=row[h] ?? "";
+
+td.oninput=()=>{
+row[h]=td.innerText;
+};
+
+tr.appendChild(td);
+
+});
+
+// DELETE BUTTON
+const del=document.createElement("td");
+
+del.innerHTML=`<button class="delete-btn">Delete</button>`;
+del.onclick=()=>removeRow(rowIndex);
+
+tr.appendChild(del);
+
+
+// VIEW BUTTON
+const view=document.createElement("td");
+
+const firstKey = headers[1];
+const firstValue = row[firstKey];
+
+view.innerHTML = `
+<form method="POST" action="/factory_parameters/${encodeURIComponent(firstValue)}" style="margin:0;">
+    <input type="hidden" name="id" value="${row[headers[1]]}">
+    <input type="hidden" name="${headers[1]}" value="${row[headers[1]] ?? ""}">
+    <button type="submit" class="open-btn">View</button>
+</form>
+`;
+
+tr.appendChild(view);
+
+
+tbody.appendChild(tr);
+
+});
+
+}
+
+
+// ===== ROW / COLUMN MANAGEMENT =====
+
+function addColumn(){
+
+const name = prompt("Column name");
+
+if(!name) return;
+
+headers.push(name);
+
+// add new column to rows
+rows.forEach(r => r[name] = "");
+
+// initialize filter state for new column
+filters[name] = [];
+
+buildTable();
+
+}
+
+function removeColumn(i){
+
+const name = headers[i];
+
+const confirmed = confirm(`Delete column "${name}" ?`);
+
+if(!confirmed) return;
+
+headers.splice(i,1);
+
+rows.forEach(r=>delete r[name]);
+
+delete filters[name];
+
+buildTable();
+
+}
+
+
+function addRow(){
+
+const r={};
+
+headers.forEach(h=>r[h]="");
+
+rows.push(r);
+
+renderTable();
+
+}
+
+function removeRow(i){
+
+const confirmed = confirm(`Delete row ${i + 1} ?`);
+
+if(!confirmed) return;
+
+rows.splice(i,1);
+
+renderTable();
+
+}
+
+
+
+// ===== SAVE BACK IN ORIGINAL STRUCTURE =====
+function buildColumnData(){
+
+const data={};
+
+headers.forEach(h=>{
+data[h]=rows.map(r=>{
+
+const v=r[h];
+
+if(!isNaN(v) && v!=="") return Number(v);
+
+return v;
+
+});
+});
+
+return{
+_order:headers,
+data:data
+};
+
+}
+
+
+function saveTable() {
+    const confirmed = confirm("Save all changes to the table?");
+    if (!confirmed) return;
+
+    const payload = buildColumnData();
+    
+    // Add the saving_file parameter to the payload
+    payload.saving_file = "subfield"; // Change this based on context
+    // Or dynamically determine it:
+    // payload.saving_file = currentContext; // e.g., "factory", "factory_details", "subfield"
+
+    console.log("Sending payload:", payload);
+
+    fetch("/save", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(async response => {
+        const text = await response.text();
+        console.log("Server status:", response.status);
+        console.log("Raw server response:", text);
+
+        if (!response.ok) {
+            throw new Error("Server error: " + response.status);
+        }
+
+        try {
+            return JSON.parse(text);
+        } catch {
+            return text;
+        }
+    })
+    .then(data => {
+        console.log("Parsed response:", data);
+        alert("Table saved successfully");
+    })
+    .catch(err => {
+        console.error("SAVE ERROR:", err);
+        alert("Save failed. Open console (F12) to see the exact error.");
+    });
+}
+
+
+
+
+// ===== HOOKS =====
+document.getElementById("searchInput").oninput=renderTable;
+document.getElementById("addColumnBtn").onclick=addColumn;
+document.getElementById("addRowBtn").onclick=addRow;
+document.getElementById("saveBtn").onclick=saveTable;
+
+
+// init
+buildTable();
+
+</script>
+
+
+<style>
+
+.page-container{
+padding:20px;
+max-width:1200px;
+}
+
+.table-wrapper{
+overflow-x:auto;
+background:white;
+border-radius:8px;
+}
+
+table{
+border-collapse:collapse;
+width:100%;
+}
+
+th,td{
+border-bottom:1px solid #ddd;
+padding:6px;
+white-space:nowrap;
+}
+
+th{
+background:#f3f3f3;
+position:sticky;
+top:0;
+}
+
+.dropdown-filters{
+display:flex;
+gap:15px;
+margin-bottom:15px;
+}
+
+.dropdown{
+position:relative;
+}
+
+.dropbtn{
+padding:6px 10px;
+border:1px solid #ccc;
+background:#f5f5f5;
+}
+
+.dropdown-content{
+display:none;
+position:absolute;
+background:white;
+border:1px solid #ccc;
+padding:10px;
+max-height:200px;
+overflow:auto;
+z-index:10;
+}
+
+.dropdown:hover .dropdown-content{
+display:block;
+}
+
+.delete-btn{
+background:#ef4444;
+color:white;
+border:none;
+border-radius:4px;
+padding:2px 6px;
+margin-left:6px;
+cursor:pointer;
+}
+
+.button-bar{
+display:flex;
+gap:12px;
+margin-bottom:20px;
+flex-wrap:wrap;
+}
+
+/* base button */
+
+.btn{
+border:none;
+padding:8px 16px;
+border-radius:6px;
+font-size:14px;
+font-weight:500;
+cursor:pointer;
+transition:all 0.15s ease;
+display:inline-flex;
+align-items:center;
+justify-content:center;
+}
+
+/* back button */
+
+.btn-secondary{
+background:#e5e7eb;
+color:#333;
+}
+
+.btn-secondary:hover{
+background:#d1d5db;
+}
+
+/* add buttons */
+
+.btn-add{
+background:#3b82f6;
+color:white;
+}
+
+.btn-add:hover{
+background:#2563eb;
+}
+
+/* save button */
+
+.btn-save{
+background:#10b981;
+color:white;
+font-weight:600;
+}
+
+.btn-save:hover{
+background:#059669;
+}
+
+/* delete buttons */
+
+.delete-btn{
+background:#ef4444;
+color:white;
+border:none;
+border-radius:4px;
+padding:3px 7px;
+margin-left:6px;
+cursor:pointer;
+font-size:12px;
+transition:background 0.15s;
+}
+
+.delete-btn:hover{
+background:#dc2626;
+}
+
+.open-btn{
+    background:#4CAF50;
+    color:white;
+    border:none;
+    border-radius:4px;
+    padding:3px 7px;
+    margin-left:6px;
+    cursor:pointer;
+    font-size:12px;
+    transition:background 0.15s;
+}
+
+.open-btn:hover{
+    background:#3b9140;
+}
+
+</style>
+
+{% endblock %}

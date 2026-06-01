@@ -1,0 +1,1145 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="page-wrapper">
+    <!-- Header Section -->
+    <div class="header-section">
+        <button class="btn-back" onclick="history.back()">
+            <span class="back-icon">←</span> Back
+        </button>
+        <h1 class="page-title">Product Management</h1>
+    </div>
+
+    <div class="container">
+        <!-- Card Header -->
+        <div class="card-header">
+            <div class="header-left">
+                <h2 class="section-title">
+                    <span class="icon-grid">⊞</span> Product Table
+                </h2>
+                <span class="badge-count" id="productCount">0 products</span>
+            </div>
+            <div class="header-right">
+                <button class="btn-add-product" onclick="openAddProductModal()">
+                    <span class="btn-icon">+</span> Add New Product
+                </button>
+            </div>
+        </div>
+
+        <!-- Search & Filters -->
+        <div class="filters-panel">
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input id="searchInput" type="text" placeholder="Search by product name..." />
+                <button class="btn-clear-search" id="clearSearch" style="display:none;">✕</button>
+            </div>
+
+            <div class="dropdown-filters">
+                <!-- Factory -->
+                <div class="dropdown">
+                    <button class="dropbtn">
+                        <span class="filter-icon">🏭</span> Factory <span class="arrow">▾</span>
+                        <span class="filter-count" id="factoryCount"></span>
+                    </button>
+                    <div class="dropdown-content" id="factoryDropdown"></div>
+                </div>
+
+                <!-- Category -->
+                <div class="dropdown">
+                    <button class="dropbtn">
+                        <span class="filter-icon">📂</span> Category <span class="arrow">▾</span>
+                        <span class="filter-count" id="categoryCount"></span>
+                    </button>
+                    <div class="dropdown-content" id="categoryDropdown"></div>
+                </div>
+
+                <!-- Subcategory -->
+                <div class="dropdown">
+                    <button class="dropbtn">
+                        <span class="filter-icon">📁</span> Subcategory <span class="arrow">▾</span>
+                        <span class="filter-count" id="subcategoryCount"></span>
+                    </button>
+                    <div class="dropdown-content" id="subcategoryDropdown"></div>
+                </div>
+            </div>
+
+            <!-- Active Filters -->
+            <div class="active-filters" id="activeFilters"></div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-wrapper">
+            <table id="productTable">
+                <thead>
+                    <tr>
+                        <th width="5%">#</th>
+                        <th width="25%">Product Name</th>
+                        <th width="20%">Factory</th>
+                        <th width="20%">Category</th>
+                        <th width="20%">Subcategory</th>
+                        <th width="10%">Action</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <div class="empty-state" id="emptyState" style="display:none;">
+                <div class="empty-icon">📦</div>
+                <h3>No products found</h3>
+                <p>Try adjusting your search or filter criteria</p>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination-wrapper">
+            <div class="pagination-info">
+                Showing <span id="showingStart">0</span>-<span id="showingEnd">0</span> of <span id="totalResults">0</span> results
+            </div>
+            <div class="pagination">
+                <button id="prevPage" class="btn-page">← Previous</button>
+                <div class="page-numbers" id="pageNumbers"></div>
+                <button id="nextPage" class="btn-page">Next →</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Product Modal -->
+<div class="modal-overlay" id="addProductModal">
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <h3>Add New Product</h3>
+            <button class="btn-close-modal" onclick="closeAddProductModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <form id="addProductForm">
+                <div class="form-group">
+                    <label for="newProductName">Product Name *</label>
+                    <input type="text" id="newProductName" required placeholder="Enter product name">
+                </div>
+                <div class="form-group">
+                    <label for="newFactory">Factory *</label>
+                    <input type="text" id="newFactory" required placeholder="Enter factory name">
+                </div>
+                <div class="form-group">
+                    <label for="newCategory">Category *</label>
+                    <input type="text" id="newCategory" required placeholder="Enter category">
+                </div>
+                <div class="form-group">
+                    <label for="newSubcategory">Subcategory</label>
+                    <input type="text" id="newSubcategory" placeholder="Enter subcategory">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" onclick="closeAddProductModal()">Cancel</button>
+                    <button type="submit" class="btn-save">Save Product</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// JSON data passed from Flask
+const rawData = {{ table_json | safe }};
+
+// Convert JSON columns → row objects
+function jsonToRowData(jsonObj) {
+    const keys = Object.keys(jsonObj);
+    const rows = [];
+    const len = Object.values(jsonObj[keys[0]]).length;
+
+    for (let i = 0; i < len; i++) {
+        let row = {};
+        keys.forEach(k => row[k] = jsonObj[k][i]);
+        rows.push(row);
+    }
+    return rows;
+}
+
+const tableData = jsonToRowData(rawData);
+
+// Pagination
+let currentPage = 1;
+const rowsPerPage = 10;
+
+// DOM references
+const tbody = document.querySelector("#productTable tbody");
+const searchInput = document.getElementById("searchInput");
+const pageInfo = document.getElementById("pageInfo");
+const prevBtn = document.getElementById("prevPage");
+const nextBtn = document.getElementById("nextPage");
+const clearSearchBtn = document.getElementById("clearSearch");
+const emptyState = document.getElementById("emptyState");
+const productCount = document.getElementById("productCount");
+
+// Filter state
+let filters = {
+    Factory: [],
+    Category: [],
+    Subcategory: []
+};
+
+// Utility to create dropdown checkboxes
+function buildDropdown(id, columnName) {
+    const container = document.getElementById(id);
+    const uniqueVals = [...new Set(tableData.map(x => x[columnName]))].sort();
+
+    // "All" option
+    const allDiv = document.createElement("div");
+    allDiv.className = "dropdown-item";
+    allDiv.innerHTML = `
+        <label class="checkbox-label">
+            <input type="checkbox" class="filter-checkbox" 
+                   data-column="${columnName}" 
+                   data-value="__all__"
+                   checked>
+            <span class="checkmark"></span>
+            All
+        </label>
+    `;
+    container.appendChild(allDiv);
+
+    // Individual values
+    uniqueVals.forEach(val => {
+        const div = document.createElement("div");
+        div.className = "dropdown-item";
+        div.innerHTML = `
+            <label class="checkbox-label">
+                <input type="checkbox" class="filter-checkbox" 
+                       data-column="${columnName}" 
+                       data-value="${val}">
+                <span class="checkmark"></span>
+                ${val}
+            </label>
+        `;
+        container.appendChild(div);
+    });
+}
+
+// Initialize dropdowns
+buildDropdown("factoryDropdown", "Factory");
+buildDropdown("categoryDropdown", "Category");
+buildDropdown("subcategoryDropdown", "Subcategory");
+
+// Handle filter logic
+document.addEventListener("change", e => {
+    if (!e.target.classList.contains("filter-checkbox")) return;
+
+    const col = e.target.dataset.column;
+    const val = e.target.dataset.value;
+
+    if (val === "__all__") {
+        filters[col] = [];
+        const checkboxes = document.querySelectorAll(`input[data-column="${col}"]`);
+        checkboxes.forEach(cb => cb.checked = (cb.dataset.value === "__all__"));
+    } else {
+        const allBox = document.querySelector(`input[data-column="${col}"][data-value="__all__"]`);
+        allBox.checked = false;
+
+        if (filters[col].includes(val)) {
+            filters[col] = filters[col].filter(v => v !== val);
+        } else {
+            filters[col].push(val);
+        }
+
+        if (filters[col].length === 0) {
+            allBox.checked = true;
+        }
+    }
+
+    updateFilterCounts();
+    updateActiveFilters();
+    currentPage = 1;
+    renderTable();
+});
+
+// Update filter count badges
+function updateFilterCounts() {
+    for (let col of ["Factory", "Category", "Subcategory"]) {
+        const countEl = document.getElementById(col.toLowerCase() + "Count");
+        if (filters[col].length > 0) {
+            countEl.textContent = filters[col].length;
+            countEl.style.display = "inline";
+        } else {
+            countEl.style.display = "none";
+        }
+    }
+}
+
+// Show active filters as tags
+function updateActiveFilters() {
+    const container = document.getElementById("activeFilters");
+    let html = "";
+    
+    for (let col of ["Factory", "Category", "Subcategory"]) {
+        filters[col].forEach(val => {
+            html += `
+                <span class="filter-tag">
+                    ${col}: ${val}
+                    <span class="remove-filter" onclick="removeFilter('${col}', '${val}')">✕</span>
+                </span>
+            `;
+        });
+    }
+    
+    container.innerHTML = html;
+}
+
+// Remove individual filter
+function removeFilter(col, val) {
+    filters[col] = filters[col].filter(v => v !== val);
+    if (filters[col].length === 0) {
+        const allBox = document.querySelector(`input[data-column="${col}"][data-value="__all__"]`);
+        allBox.checked = true;
+    }
+    
+    // Update checkbox states
+    const checkboxes = document.querySelectorAll(`input[data-column="${col}"]`);
+    checkboxes.forEach(cb => {
+        if (cb.dataset.value !== "__all__") {
+            cb.checked = filters[col].includes(cb.dataset.value);
+        }
+    });
+    
+    updateFilterCounts();
+    updateActiveFilters();
+    currentPage = 1;
+    renderTable();
+}
+
+// Filtering logic
+function getFilteredData() {
+    const text = searchInput.value.toLowerCase();
+
+    return tableData.filter(row => {
+        if (text && !row.Product_Name.toLowerCase().includes(text)) return false;
+
+        for (let col of ["Factory", "Category", "Subcategory"]) {
+            const active = filters[col];
+            if (active.length === 0) continue;
+            if (!active.includes(row[col])) return false;
+        }
+
+        return true;
+    });
+}
+
+// Render table with pagination
+function renderTable() {
+    const filtered = getFilteredData();
+    const totalPages = Math.ceil(filtered.length / rowsPerPage);
+    
+    // Update product count
+    productCount.textContent = `${filtered.length} product${filtered.length !== 1 ? 's' : ''}`;
+
+    // Handle empty state
+    if (filtered.length === 0) {
+        document.querySelector(".table-wrapper table").style.display = "none";
+        emptyState.style.display = "block";
+    } else {
+        document.querySelector(".table-wrapper table").style.display = "table";
+        emptyState.style.display = "none";
+    }
+
+    const start = (currentPage - 1) * rowsPerPage;
+    const end = Math.min(start + rowsPerPage, filtered.length);
+    const pageRows = filtered.slice(start, end);
+
+    tbody.innerHTML = "";
+
+    pageRows.forEach((row, index) => {
+        const globalIndex = start + index + 1;
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${globalIndex}</td>
+            <td class="product-name">${row.Product_Name}</td>
+            <td>${row.Factory}</td>
+            <td>${row.Category}</td>
+            <td>${row.Subcategory}</td>
+            <td>
+                <form method="POST" action="/product/${encodeURIComponent(row.Product_Name)}" style="margin:0;">
+                    <input type="hidden" name="factory" value="${row.Factory}">
+                    <input type="hidden" name="category" value="${row.Category}">
+                    <input type="hidden" name="subcategory" value="${row.Subcategory}">
+                    <button type="submit" class="btn-view">View</button>
+                </form>
+            </td>
+        `;
+
+        tbody.appendChild(tr);
+    });
+
+    // Update showing info
+    document.getElementById("showingStart").textContent = filtered.length > 0 ? start + 1 : 0;
+    document.getElementById("showingEnd").textContent = end;
+    document.getElementById("totalResults").textContent = filtered.length;
+
+    // Update pagination
+    updatePaginationControls(totalPages);
+    
+    // Update search clear button
+    clearSearchBtn.style.display = searchInput.value ? "inline-block" : "none";
+}
+
+// Update pagination controls
+function updatePaginationControls(totalPages) {
+    prevBtn.disabled = currentPage === 1;
+    nextBtn.disabled = currentPage === totalPages || totalPages === 0;
+    
+    // Generate page numbers
+    const pageNumbersContainer = document.getElementById("pageNumbers");
+    let pageNumbersHtml = "";
+    
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === currentPage) {
+            pageNumbersHtml += `<span class="page-number active">${i}</span>`;
+        } else {
+            pageNumbersHtml += `<span class="page-number" onclick="goToPage(${i})">${i}</span>`;
+        }
+    }
+    
+    pageNumbersContainer.innerHTML = pageNumbersHtml;
+}
+
+// Go to specific page
+function goToPage(page) {
+    currentPage = page;
+    renderTable();
+    // Scroll to top of table
+    document.querySelector(".table-wrapper").scrollIntoView({ behavior: "smooth" });
+}
+
+// Pagination controls
+prevBtn.onclick = () => {
+    if (currentPage > 1) {
+        currentPage--;
+        renderTable();
+    }
+};
+nextBtn.onclick = () => {
+    const total = Math.ceil(getFilteredData().length / rowsPerPage);
+    if (currentPage < total) {
+        currentPage++;
+        renderTable();
+    }
+};
+
+// Live search
+searchInput.addEventListener("input", () => {
+    currentPage = 1;
+    renderTable();
+});
+
+// Clear search
+clearSearchBtn.addEventListener("click", () => {
+    searchInput.value = "";
+    currentPage = 1;
+    renderTable();
+    searchInput.focus();
+});
+
+// Modal functions
+function openAddProductModal() {
+    document.getElementById("addProductModal").classList.add("active");
+    document.getElementById("newProductName").focus();
+}
+
+function closeAddProductModal() {
+    document.getElementById("addProductModal").classList.remove("active");
+    document.getElementById("addProductForm").reset();
+}
+
+// Close modal on overlay click
+document.getElementById("addProductModal").addEventListener("click", function(e) {
+    if (e.target === this) {
+        closeAddProductModal();
+    }
+});
+
+// Handle form submission
+document.getElementById("addProductForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+    
+    const newProduct = {
+        Product_Name: document.getElementById("newProductName").value,
+        Factory: document.getElementById("newFactory").value,
+        Category: document.getElementById("newCategory").value,
+        Subcategory: document.getElementById("newSubcategory").value || "-"
+    };
+    
+    // Here you would typically send this data to your backend
+    // For now, we'll add it to the table data array
+    tableData.push(newProduct);
+    
+    // Refresh dropdowns and table
+    refreshAllDropdowns();
+    closeAddProductModal();
+    renderTable();
+    
+    // Show success message
+    showNotification("Product added successfully!", "success");
+});
+
+// Refresh all dropdown filters
+function refreshAllDropdowns() {
+    ["factoryDropdown", "categoryDropdown", "subcategoryDropdown"].forEach(id => {
+        document.getElementById(id).innerHTML = "";
+    });
+    
+    buildDropdown("factoryDropdown", "Factory");
+    buildDropdown("categoryDropdown", "Category");
+    buildDropdown("subcategoryDropdown", "Subcategory");
+}
+
+// Notification system
+function showNotification(message, type = "success") {
+    const notification = document.createElement("div");
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.classList.add("show");
+    }, 100);
+    
+    setTimeout(() => {
+        notification.classList.remove("show");
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+// Close modals with Escape key
+document.addEventListener("keydown", function(e) {
+    if (e.key === "Escape") {
+        closeAddProductModal();
+    }
+});
+
+// Init render
+renderTable();
+</script>
+
+<style>
+/* Global Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.page-wrapper {
+    border-radius: 3%;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px;
+}
+
+.header-section {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 20px 0;
+    margin-bottom: 10px;
+}
+
+.btn-back {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.btn-back:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateX(-3px);
+}
+
+.page-title {
+    color: white;
+    font-size: 28px;
+    font-weight: 700;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Container */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Card Header */
+.card-header {
+    background: white;
+    padding: 25px 30px;
+    border-radius: 15px 15px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.section-title {
+    font-size: 22px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.icon-grid {
+    color: #667eea;
+}
+
+.badge-count {
+    background: #f0f0f0;
+    color: #666;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* Add Button */
+.btn-add-product {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-add-product:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+/* Filters Panel */
+.filters-panel {
+    background: white;
+    padding: 20px 30px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.search-box {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+}
+
+#searchInput {
+    width: 100%;
+    padding: 12px 100px 12px 45px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 15px;
+    transition: all 0.3s ease;
+}
+
+#searchInput:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.btn-clear-search {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #f0f0f0;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.btn-clear-search:hover {
+    background: #e0e0e0;
+}
+
+/* Dropdown Filters */
+.dropdown-filters {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropbtn {
+    padding: 10px 20px;
+    background: #f8f9fa;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dropbtn:hover {
+    border-color: #667eea;
+    background: #f0f3ff;
+}
+
+.filter-icon {
+    font-size: 16px;
+}
+
+.arrow {
+    font-size: 12px;
+    margin-left: 5px;
+}
+
+.filter-count {
+    background: #667eea;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    display: none;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: white;
+    min-width: 200px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    z-index: 1000;
+    padding: 10px;
+    max-height: 250px;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+.dropdown-item {
+    padding: 5px 0;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 5px;
+    transition: background 0.2s ease;
+}
+
+.checkbox-label:hover {
+    background: #f0f3ff;
+}
+
+/* Active Filters */
+.active-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 15px;
+}
+
+.filter-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    background: #f0f3ff;
+    border: 1px solid #667eea;
+    border-radius: 20px;
+    font-size: 13px;
+    color: #667eea;
+}
+
+.remove-filter {
+    cursor: pointer;
+    font-weight: bold;
+    margin-left: 5px;
+}
+
+.remove-filter:hover {
+    color: #764ba2;
+}
+
+/* Table */
+.table-wrapper {
+    background: white;
+    overflow-x: auto;
+}
+
+#productTable {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#productTable thead {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+#productTable th {
+    padding: 15px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+#productTable td {
+    padding: 15px;
+    border-bottom: 1px solid #f0f0f0;
+    color: #333;
+}
+
+#productTable tbody tr {
+    transition: all 0.3s ease;
+}
+
+#productTable tbody tr:hover {
+    background: #f8f9ff;
+    transform: translateX(5px);
+}
+
+.product-name {
+    font-weight: 600;
+    color: #667eea;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    background: white;
+}
+
+.empty-icon {
+    font-size: 64px;
+    margin-bottom: 20px;
+}
+
+.empty-state h3 {
+    font-size: 20px;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.empty-state p {
+    color: #666;
+}
+
+/* View Button */
+.btn-view {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-view:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+/* Pagination */
+.pagination-wrapper {
+    background: white;
+    padding: 20px 30px;
+    border-radius: 0 0 15px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.pagination-info {
+    color: #666;
+    font-size: 14px;
+}
+
+.pagination {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-page {
+    padding: 8px 16px;
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    transition: all 0.3s ease;
+}
+
+.btn-page:hover:not(:disabled) {
+    border-color: #667eea;
+    color: #667eea;
+}
+
+.btn-page:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.page-numbers {
+    display: flex;
+    gap: 5px;
+}
+
+.page-number {
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.page-number:hover {
+    background: #f0f3ff;
+}
+
+.page-number.active {
+    background: #667eea;
+    color: white;
+}
+
+/* Modal */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal-dialog {
+    background: white;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-header {
+    padding: 20px 30px;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    color: #333;
+    font-size: 20px;
+}
+
+.btn-close-modal {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.btn-close-modal:hover {
+    background: #f0f0f0;
+}
+
+.modal-body {
+    padding: 30px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #333;
+    font-weight: 500;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 15px;
+    transition: all 0.3s ease;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 30px;
+}
+
+.btn-cancel {
+    padding: 10px 20px;
+    background: #f0f0f0;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-cancel:hover {
+    background: #e0e0e0;
+}
+
+.btn-save {
+    padding: 10px 24px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-save:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+/* Notification */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 25px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    z-index: 10000;
+    opacity: 0;
+    transform: translateX(100px);
+    transition: all 0.3s ease;
+}
+
+.notification.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.notification-success {
+    border-left: 4px solid #4CAF50;
+    color: #4CAF50;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .card-header {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .dropdown-filters {
+        flex-direction: column;
+    }
+    
+    .pagination-wrapper {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    #productTable {
+        font-size: 14px;
+    }
+    
+    .modal-dialog {
+        width: 95%;
+        margin: 20px;
+    }
+}
+</style>
+
+{% endblock %}

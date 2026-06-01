@@ -1,0 +1,36 @@
+{
+    "_order": [
+        "id",
+        "factory name",
+        "manager",
+        "city",
+        "address"
+    ],
+    "data": {
+        "id": [
+            1,
+            2,
+            3
+        ],
+        "factory name": [
+            "HajAmini",
+            "DinMohammadpour",
+            "Arefi"
+        ],
+        "manager": [
+            "Amin Dehmolaee",
+            "Kian Abbasi",
+            "Sina Jahani"
+        ],
+        "city": [
+            "Tehran",
+            "Qom",
+            "Tehran"
+        ],
+        "address": [
+            "Naeimi st.",
+            "Saveh hw",
+            "West Terminal"
+        ]
+    }
+}

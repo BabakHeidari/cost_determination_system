@@ -1,0 +1,547 @@
+{% extends "base.html" %}
+{% block content %}
+
+<button class="btn btn-secondary mb-3" onclick="history.back()">Back</button>
+
+<div class="page-container bom-page">
+
+    <h2>BOM / Recipe for: {{ product_name }}</h2>
+
+    <div style="margin-bottom: 20px;">
+        <input type="text" id="searchInput" placeholder="Search in BOM..." style="width: 250px; padding: 6px;">
+    </div>
+
+    <div id="filterContainer" style="margin-bottom: 20px;"></div>
+
+    <div class="table-wrapper">
+        <table id="bomTable">
+            <thead><tr id="tableHead"></tr></thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+
+    <div style="margin-top: 20px; display:flex; gap:15px;">
+        <button class="btn-primary" id="addColumnBtn">Add Column</button>
+        <button class="btn-primary" id="addRowBtn">Add Row</button>
+        <button class="btn-success" id="saveBtn">Save Changes</button>
+    </div>
+
+</div>
+
+
+<style>
+/* Prevent unwanted scaling from base template */
+.bom-page {
+    transform: none !important;
+    zoom: 1 !important;
+}
+
+/* Page layout */
+.page-container {
+    padding: 2rem;
+    max-width: 100%;
+    box-sizing: border-box;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 0.95rem; /* slightly smaller base font */
+}
+
+/* Heading */
+.bom-page h2 {
+    font-size: clamp(1.1rem, 2vw, 1.4rem);
+    margin-bottom: 1rem;
+}
+
+/* Inputs and filters */
+#searchInput {
+    width: min(260px, 80vw);
+    padding: 0.4rem 0.6rem;
+    font-size: 0.9rem;
+}
+
+#filterContainer input {
+    padding: 0.25rem 0.4rem;
+    font-size: 0.8rem;
+}
+
+/* Table wrapper */
+.table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* Table */
+table {
+    border-collapse: collapse;
+    width: 100%;
+    /* Remove big fixed min-width, let it shrink on smaller screens */
+    min-width: 100%;
+    font-size: 0.85rem;
+}
+
+th, td {
+    padding: 0.4rem 0.5rem;
+    border-bottom: 1px solid #eee;
+    white-space: nowrap;
+}
+
+th {
+    background-color: #f9fafb;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+/* Make header text itself slightly smaller */
+th span[contenteditable="true"] {
+    font-size: 0.85rem;
+}
+
+/* Buttons */
+button {
+    padding: 0.4rem 0.7rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.85rem;
+}
+
+.btn-primary { background:#3b82f6; color:white; }
+.btn-primary:hover { background:#2563eb; }
+
+.btn-success { background:#10b981; color:white; }
+.btn-success:hover { background:#059669; }
+
+.delete-btn {
+    background:#ef4444;
+    color:white;
+    border-radius: 50%;
+    padding: 0;              /* no extra padding */
+    width: 18px;
+    height: 18px;
+    line-height: 16px;
+    text-align: center;
+    font-size: 0.75rem;
+    margin-left: 6px;
+}
+
+/* Row delete button in the last column – make it small but readable */
+td .delete-btn {
+    border-radius: 4px;
+    width: auto;
+    height: auto;
+    padding: 0.25rem 0.4rem;
+    line-height: normal;
+    font-size: 0.75rem;
+}
+
+/* Button bar */
+.bom-page > div[style*="margin-top: 20px; display:flex"] {
+    flex-wrap: wrap;
+}
+
+/* Responsive tweaks */
+@media (max-width: 1024px) {
+    .page-container {
+        padding: 1rem;
+        font-size: 0.9rem;
+    }
+
+    table {
+        font-size: 0.8rem;
+    }
+
+    th, td {
+        padding: 0.3rem 0.4rem;
+    }
+
+    button {
+        font-size: 0.8rem;
+        padding: 0.3rem 0.6rem;
+    }
+
+    #searchInput {
+        width: 100%;
+    }
+}
+
+@media (max-width: 600px) {
+    .page-container {
+        padding: 0.75rem;
+    }
+
+    table {
+        font-size: 0.75rem;
+    }
+
+    th, td {
+        padding: 0.25rem 0.3rem;
+    }
+
+    .delete-btn {
+        width: 16px;
+        height: 16px;
+        line-height: 14px;
+        font-size: 0.7rem;
+    }
+}
+</style>
+
+
+
+
+<script>
+    const productName = "{{ product_name }}";
+    const bomPayload = {{ bom_json | tojson }};
+    const headers = bomPayload._order;  // <- exact order from Python
+    const originalBOM = bomPayload.data;
+
+    const materialsData = {{ materials_data | tojson }}.data;
+    const materialLookup = {};
+
+    materialsData.material.forEach((mat, i) => {
+        materialLookup[mat] = {
+            unit: materialsData.unit[i],
+            currency: materialsData.currency[i],
+            cost: materialsData.cost_per_unit_in_currency[i]
+        };
+    });
+
+    const materialOptions = Object.values(materialsData.material)
+
+
+    /* Convert backend dict-of-columns to frontend row list */
+    function jsonToRowData(json) {
+        const cols = Object.keys(json);
+        const rows = [];
+        const rowIndices = Object.keys(json[cols[0]]);
+
+        rowIndices.forEach(i => {
+            const row = {};
+            cols.forEach(col => {
+                const v = json[col][i];
+                row[col] = (v !== null && v !== undefined) ? v : "";
+            });
+            rows.push(row);
+        });
+
+        return rows;
+    }
+
+    let bomRows = jsonToRowData(originalBOM);
+
+
+
+
+    // -------------------- BUILD TABLE ----------------------
+
+    function buildTable() {
+        const tableHead = document.getElementById("tableHead");
+        const tableBody = document.getElementById("tableBody");
+        tableHead.innerHTML = "";
+        tableBody.innerHTML = "";
+
+        // Build header row (preserving order)
+        headers.forEach((h, index) => {
+            const th = document.createElement("th");
+
+            const headerText = document.createElement("span");
+            headerText.contentEditable = "false";
+            headerText.innerText = h;
+            th.appendChild(headerText);
+
+            if (!["materials", "unit"].includes(h)) {
+                const delBtn = document.createElement("button");
+                delBtn.className = "delete-btn";
+                delBtn.innerText = "X";
+                delBtn.onclick = () => removeColumn(index);
+                th.appendChild(delBtn);
+            }
+
+            // Change header name
+            headerText.addEventListener("blur", () => {
+                headers[index] = headerText.innerText.trim();
+            });
+
+            tableHead.appendChild(th);
+        });
+
+        // Rows
+        bomRows.forEach((row, rIndex) => {
+            const tr = document.createElement("tr");
+
+            headers.forEach(h => {
+                const td = document.createElement("td");
+
+                if (h === "materials") {
+
+                    const select = document.createElement("select");
+
+                    materialOptions.forEach(mat => {
+                        const opt = document.createElement("option");
+                        opt.value = mat;
+                        opt.textContent = mat;
+                        if (row[h] === mat) opt.selected = true;
+                        select.appendChild(opt);
+                    });
+
+                    select.onchange = () => {
+                        const mat = select.value;
+                        bomRows[rIndex]["materials"] = mat;
+
+                        if (materialLookup[mat]) {
+                            bomRows[rIndex]["unit"] = materialLookup[mat].unit;
+                            bomRows[rIndex]["currency"] = materialLookup[mat].currency;
+                            bomRows[rIndex]["cost_per_unit_in_currency"] = materialLookup[mat].cost;
+                        }
+
+                        buildTable();
+                    };
+
+
+                    td.appendChild(select);
+
+                }
+
+                else if (h === "unit") {
+
+                    const input = document.createElement("input");
+                    input.value = row[h] || "";
+                    input.readOnly = true;
+
+                    td.appendChild(input);
+                }
+
+
+                else if (h === "cost_per_unit_in_currency") {
+
+                    const input = document.createElement("input");
+                    input.type = "number";
+                    input.value = row[h] || "";
+                    input.readOnly = true;
+
+                    td.appendChild(input);
+                }
+
+
+                else {
+
+                    const input = document.createElement("input");
+                    input.type = "number";
+                    input.value = row[h] || "";
+
+                    input.oninput = () => {
+                        bomRows[rIndex][h] = input.value;
+                    };
+
+                    td.appendChild(input);
+                }
+
+                tr.appendChild(td);
+
+            });
+
+            // Delete row button
+            const delRowTd = document.createElement("td");
+            const delRowBtn = document.createElement("button");
+            delRowBtn.className = "delete-btn";
+            delRowBtn.innerText = "Delete Row";
+            delRowBtn.onclick = () => removeRow(rIndex);
+            delRowTd.appendChild(delRowBtn);
+
+            tr.appendChild(delRowTd);
+            tableBody.appendChild(tr);
+        });
+
+        buildFilters();
+    }
+
+
+
+
+    // -------------------- FILTERING ----------------------
+
+    function buildFilters() {
+        const container = document.getElementById("filterContainer");
+        container.innerHTML = "";
+
+        headers.forEach(h => {
+            const inp = document.createElement("input");
+            inp.placeholder = "Filter " + h;
+            inp.dataset.header = h;
+            inp.style.marginRight = "10px";
+            inp.oninput = applyFiltering;
+            container.appendChild(inp);
+        });
+    }
+
+    function applyFiltering() {
+        const searchValue = document.getElementById("searchInput").value.toLowerCase();
+        const filters = {};
+
+        document.querySelectorAll("#filterContainer input").forEach(inp => {
+            if (inp.value.trim() !== "") filters[inp.dataset.header] = inp.value.toLowerCase();
+        });
+
+        const filtered = bomRows.filter(row => {
+
+            if (searchValue && !Object.values(row).join(" ").toLowerCase().includes(searchValue))
+                return false;
+
+            for (let h in filters) {
+                if (!String(row[h] || "").toLowerCase().includes(filters[h]))
+                    return false;
+            }
+            return true;
+        });
+
+        renderFilteredTable(filtered);
+    }
+
+    function renderFilteredTable(rows) {
+        const tbody = document.getElementById("tableBody");
+        tbody.innerHTML = "";
+
+        rows.forEach((row, rIndex) => {
+            const tr = document.createElement("tr");
+
+            headers.forEach(h => {
+                const td = document.createElement("td");
+                td.contentEditable = "false";
+                td.innerText = row[h] || "";
+                tr.appendChild(td);
+            });
+
+            const delRowTd = document.createElement("td");
+            const delRowBtn = document.createElement("button");
+            delRowBtn.className = "delete-btn";
+            delRowBtn.innerText = "Delete Row";
+            delRowTd.appendChild(delRowBtn);
+            tr.appendChild(delRowTd);
+
+            tbody.appendChild(tr);
+        });
+    }
+
+
+
+
+    // -------------------- ROW & COLUMN MGMT ----------------------
+
+    function addColumn() {
+        const name = prompt("Column name?");
+        if (!name) return;
+
+        headers.push(name);
+        bomRows.forEach(r => r[name] = "");
+
+        buildTable();
+    }
+
+    function removeColumn(idx) {
+        const colName = headers[idx];
+
+        if (!confirm(`Are you sure you want to delete the column "${colName}"?\nThis cannot be undone.`)) {
+            return;
+        }
+
+        headers.splice(idx, 1);
+        bomRows.forEach(r => delete r[colName]);
+        buildTable();
+    }
+
+
+    function addRow() {
+        const r = {};
+        headers.forEach(h => r[h] = "");
+        bomRows.push(r);
+        buildTable();
+    }
+
+    function removeRow(idx) {
+        if (!confirm("Are you sure you want to delete this row?\nThis cannot be undone.")) {
+            return;
+        }
+
+        bomRows.splice(idx, 1);
+        buildTable();
+    }
+
+
+    function toNumberIfNumeric(value) {
+        if (value === null || value === undefined) return value;
+
+        const str = String(value).trim();
+        if (str === "") return str; // keep empty as string or "" if you prefer null
+
+        // Try numeric conversion
+        const num = Number(str);
+        if (!Number.isNaN(num)) {
+            // It's a valid number --> return numeric type (float)
+            return num;
+        }
+
+        // Not numeric -> keep as original string
+        return str;
+    }
+
+
+    // -------------------- SAVE ----------------------
+
+    function saveBOM() {
+
+    if (!confirm("Save changes to this BOM?\nThis will overwrite existing data.")) {
+        return;
+    }
+
+    const data = {};
+    headers.forEach(h => {
+        data[h] = bomRows.map(row => {
+            const raw = row[h] ?? "";
+            return toNumberIfNumeric(raw);
+        });
+    });
+
+    const payload = {
+        _order: headers,
+        data: data
+    };
+
+    fetch(`/save_bom`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    })
+    
+    .then(r => {
+        if (!r.ok) {
+            return r.json().then(err => { throw err; });
+        }
+        return r.json();
+    })
+    .then(() => {
+        alert("BOM saved successfully ✅");
+    })
+    .catch(err => {
+        console.error("Error saving BOM:", err);
+        alert("Error saving BOM: " + (err.message || JSON.stringify(err)));
+    });
+}
+
+
+
+    // -------------------- HOOK BUTTONS --------------------
+
+    document.getElementById("addColumnBtn").onclick = addColumn;
+    document.getElementById("addRowBtn").onclick = addRow;
+    document.getElementById("saveBtn").onclick = saveBOM;
+    document.getElementById("searchInput").oninput = applyFiltering;
+
+
+    buildTable();
+</script>
+
+{% endblock %}

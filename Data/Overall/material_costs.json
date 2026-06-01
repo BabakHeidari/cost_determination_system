@@ -1,0 +1,59 @@
+{
+    "_order": [
+        "material",
+        "unit",
+        "currency",
+        "cost_per_unit_in_currency"
+    ],
+    "data": {
+        "material": [
+            "mat1",
+            "mat2",
+            "mat3",
+            "m4",
+            "m5",
+            "iron",
+            "sample_material",
+            "dollar",
+            "euro",
+            "Coil"
+        ],
+        "unit": [
+            "kg",
+            "ltr",
+            "gr",
+            "gr",
+            "kg",
+            "kg",
+            "sample_unit",
+            "No Unit: Currency",
+            "No Unit: Currency",
+            "kg"
+        ],
+        "currency": [
+            "dollar",
+            "rial",
+            "euro",
+            "rial",
+            "dollar",
+            "rial",
+            "sample_currency",
+            "rial",
+            "rial",
+            "Rial"
+        ],
+        "cost_per_unit_in_currency": [
+            210,
+            55000000,
+            0.43,
+            430000,
+            100.32,
+            12000000,
+            1,
+            1790000,
+            2030000,
+            4300000
+        ]
+    },
+    "last_modification_date": "2026-05-23T20:10:31.163Z"
+}
