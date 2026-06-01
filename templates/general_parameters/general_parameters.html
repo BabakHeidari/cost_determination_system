@@ -2,28 +2,28 @@
 {% block content %}
 
 <button class="btn btn-secondary mb-3" onclick="history.back()">
-    <i class="fas fa-arrow-left"></i> Back
+    <i class="fas fa-arrow-left"></i> بازگشت
 </button>
 
 <div class="page-container">
     <div class="page-header">
-        <h2>Editable Table</h2>
+        <h2>جدول قابل ویرایش</h2>
         <div class="header-actions">
             <button class="btn btn-add" id="addRowBtn">
-                <i class="fas fa-plus"></i> Add Row
+                <i class="fas fa-plus"></i> افزودن ردیف
             </button>
             <button class="btn btn-add" id="addColumnBtn">
-                <i class="fas fa-columns"></i> Add Column
+                <i class="fas fa-columns"></i> افزودن ستون
             </button>
             <button class="btn btn-save" id="saveBtn">
-                <i class="fas fa-save"></i> Save
+                <i class="fas fa-save"></i> ذخیره
             </button>
         </div>
     </div>
 
     <div class="search-bar">
         <i class="fas fa-search search-icon"></i>
-        <input id="searchInput" type="text" placeholder="Search by first column">
+        <input id="searchInput" type="text" placeholder="جستجو بر اساس ستون اول">
     </div>
 
     <div id="filtersContainer" class="dropdown-filters"></div>
@@ -39,13 +39,13 @@
 
     <div class="pagination-container">
         <div class="pagination-info">
-            Showing <span id="showingStart">0</span>-<span id="showingEnd">0</span> of <span id="totalRows">0</span> rows
+            نمایش <span id="showingStart">0</span>-<span id="showingEnd">0</span> از <span id="totalRows">0</span> ردیف
         </div>
         <div class="pagination-controls">
             <button class="btn-page" id="prevPage" disabled>
                 <i class="fas fa-chevron-left"></i>
             </button>
-            <span id="pageInfo" class="page-info">Page 1</span>
+            <span id="pageInfo" class="page-info">صفحه ۱</span>
             <button class="btn-page" id="nextPage">
                 <i class="fas fa-chevron-right"></i>
             </button>
@@ -55,23 +55,23 @@
     <!-- Last Modified Info -->
     <div class="last-modified-info" id="lastModifiedInfo" style="display:none;">
         <i class="fas fa-clock"></i>
-        Last modified: <span id="lastModifiedDate"></span>
+        آخرین ویرایش: <span id="lastModifiedDate"></span>
     </div>
 </div>
 
-<!-- Add Row Modal -->
+<!-- افزودن ردیف Modal -->
 <div id="addRowModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h3>Add New Row</h3>
+            <h3>افزودن ردیف جدید</h3>
             <button class="modal-close" onclick="closeModal()">&times;</button>
         </div>
         <div class="modal-body">
             <div id="modalFields"></div>
             <div class="modal-actions">
-                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-secondary" onclick="closeModal()">انصراف</button>
                 <button class="btn btn-save" onclick="submitNewRow()">
-                    <i class="fas fa-plus"></i> Add Row
+                    <i class="fas fa-plus"></i> افزودن ردیف
                 </button>
             </div>
         </div>
@@ -246,7 +246,7 @@ function updateLastModifiedDisplay() {
                 dateElement.textContent = date.toLocaleString();
                 displayElement.style.display = 'flex';
             } else {
-                dateElement.textContent = 'Invalid date';
+                dateElement.textContent = 'تاریخ نامعتبر';
                 displayElement.style.display = 'flex';
             }
         } catch (e) {
@@ -265,7 +265,7 @@ function buildTable() {
     // Update search placeholder
     const searchInput = document.getElementById("searchInput");
     if (searchInput && headers.length > 0) {
-        searchInput.placeholder = "Search by " + headers[0];
+        searchInput.placeholder = "جستجو بر اساس " + faLabel(headers[0]);
         searchColumn = headers[0];
     }
     
@@ -280,25 +280,25 @@ function buildTable() {
         if (isFixed) {
             // Fixed headers - non-editable
             const span = document.createElement("span");
-            span.innerText = h;
+            span.innerText = faLabel(h);
             span.className = "header-text fixed";
             headerContent.appendChild(span);
         } else {
             // Editable headers for additional columns
             const span = document.createElement("span");
             span.contentEditable = true;
-            span.innerText = h;
+            span.innerText = faLabel(h);
             span.className = "header-text";
             
             span.onblur = () => {
                 const oldName = headers[i];
                 const newName = span.innerText.trim();
                 
-                if (!newName || oldName === newName) return;
+                if (!newName || oldName === newName || newName === faLabel(oldName)) return;
                 
                 if (headers.includes(newName)) {
-                    alert("Column name already exists!");
-                    span.innerText = oldName;
+                    alert("نام ستون از قبل وجود دارد!");
+                    span.innerText = faLabel(oldName);
                     return;
                 }
                 
@@ -349,7 +349,7 @@ function buildTable() {
             const del = document.createElement("button");
             del.innerHTML = '<i class="fas fa-times"></i>';
             del.className = "delete-btn";
-            del.title = "Delete column";
+            del.title = "حذف ستون";
             del.onclick = () => removeColumn(i);
             headerContent.appendChild(del);
         }
@@ -358,10 +358,10 @@ function buildTable() {
         thead.appendChild(th);
     });
     
-    // Actions column header
+    // عملیات column header
     const emptyTh = document.createElement("th");
     emptyTh.className = "actions-column";
-    emptyTh.innerHTML = "Actions";
+    emptyTh.innerHTML = "عملیات";
     thead.appendChild(emptyTh);
     
     buildFilters();
@@ -412,7 +412,7 @@ function buildFilters() {
         dropdown.className = "dropdown";
         
         dropdown.innerHTML = `
-            <button class="dropbtn">${col} <i class="fas fa-chevron-down"></i></button>
+            <button class="dropbtn">${faLabel(col)} <i class="fas fa-chevron-down"></i></button>
             <div class="dropdown-content" id="drop_${col}"></div>
         `;
         
@@ -430,7 +430,7 @@ function buildFilters() {
                        data-val="__all__" 
                        class="filter-checkbox" 
                        checked>
-                All
+                همه
             </label>
         `;
         container.appendChild(allOption);
@@ -453,7 +453,7 @@ function buildFilters() {
         } else {
             const noData = document.createElement("div");
             noData.className = "filter-empty";
-            noData.innerText = "No data available";
+            noData.innerText = "داده‌ای موجود نیست";
             container.appendChild(noData);
         }
     });
@@ -500,7 +500,7 @@ function getFiltered() {
         }
         
         // Only apply filters to columns that have active filters
-        for (let c of Object.keys(filters)) {
+        for (let c از Object.keys(filters)) {
             const active = filters[c];
             if (active && active.length > 0 && !active.includes(r[c])) {
                 return false;
@@ -539,7 +539,7 @@ function renderTable() {
     document.getElementById("showingStart").innerText = totalFiltered > 0 ? start + 1 : 0;
     document.getElementById("showingEnd").innerText = end;
     document.getElementById("totalRows").innerText = totalFiltered;
-    document.getElementById("pageInfo").innerText = `Page ${currentPage} of ${totalPages || 1}`;
+    document.getElementById("pageInfo").innerText = faPage(currentPage, totalPages || 1);
     
     document.getElementById("prevPage").disabled = currentPage <= 1;
     document.getElementById("nextPage").disabled = currentPage >= totalPages || totalFiltered === 0;
@@ -581,7 +581,7 @@ function renderTable() {
                 currencies.forEach(currency => {
                     const option = document.createElement("option");
                     option.value = currency;
-                    option.textContent = currency;
+                    option.textContent = faLabel(currency);
                     if (row[h] === currency) {
                         option.selected = true;
                     }
@@ -602,7 +602,7 @@ function renderTable() {
                 units.forEach(unit => {
                     const option = document.createElement("option");
                     option.value = unit;
-                    option.textContent = unit;
+                    option.textContent = faLabel(unit);
                     if (row[h] === unit) {
                         option.selected = true;
                     }
@@ -618,7 +618,7 @@ function renderTable() {
             } else {
                 // Regular editable cell for other columns
                 td.contentEditable = true;
-                td.innerText = row[h] !== undefined ? row[h] : '';
+                td.innerText = faLabel(row[h] !== undefined ? row[h] : '');
                 
                 td.oninput = () => {
                     row[h] = td.innerText;
@@ -630,7 +630,7 @@ function renderTable() {
         
         const actionTd = document.createElement("td");
         actionTd.className = "action-cell";
-        actionTd.innerHTML = `<button class="btn-delete-row" title="Delete row">
+        actionTd.innerHTML = `<button class="btn-delete-row" title="حذف ردیف">
             <i class="fas fa-trash"></i>
         </button>`;
         actionTd.querySelector('.btn-delete-row').onclick = () => removeRow(start + globalIndex);
@@ -642,11 +642,11 @@ function renderTable() {
 
 // ===== ROW MANAGEMENT =====
 function addColumn() {
-    const name = prompt("Column name:");
+    const name = prompt("نام ستون:");
     if (!name) return;
     
     if (headers.includes(name)) {
-        alert("Column name already exists!");
+        alert("نام ستون از قبل وجود دارد!");
         return;
     }
     
@@ -663,12 +663,12 @@ function addColumn() {
 
 function removeColumn(i) {
     if (i < 4) {
-        alert("Cannot delete fixed columns (first 4 columns).");
+        alert("ستون‌های ثابت (چهار ستون اول) قابل حذف نیستند.");
         return;
     }
     
     const name = headers[i];
-    const confirmed = confirm(`Delete column "${name}"? This will remove all data in this column.`);
+    const confirmed = confirm(`حذف ستون "${name}"? This will remove all data in this column.`);
     
     if (!confirmed) return;
     
@@ -692,41 +692,41 @@ function openAddRowModal() {
         if (isCostColumn(h)) {
             // Float input for cost_per_unit_in_currency
             inputHtml = `
-                <label for="field_${h}">${h} (number) <span class="required">*</span></label>
+                <label for="field_${h}">${faLabel(h)} (عدد) <span class="required">*</span></label>
                 <input type="number" 
                        id="field_${h}" 
                        class="modal-input" 
                        step="0.01"
                        min="0"
-                       placeholder="Enter cost value (e.g., 15.99)" 
+                       placeholder="مقدار هزینه را وارد کنید (مثلاً 15.99)" 
                        required>
             `;
         } else if (isCurrencyDropdown(h, index)) {
             // Currency dropdown
             inputHtml = `
-                <label for="field_${h}">${h} <span class="required">*</span></label>
+                <label for="field_${h}">${faLabel(h)} <span class="required">*</span></label>
                 <select id="field_${h}" class="modal-input modal-select" required>
-                    <option value="">Select currency...</option>
-                    ${currencies.map(c => `<option value="${c}">${c}</option>`).join('')}
+                    <option value="">انتخاب ارز...</option>
+                    ${currencies.map(c => `<option value="${c}">${faLabel(c)}</option>`).join('')}
                 </select>
             `;
         } else if (isUnitDropdown(h, index)) {
             // Unit dropdown
             inputHtml = `
-                <label for="field_${h}">${h} <span class="required">*</span></label>
+                <label for="field_${h}">${faLabel(h)} <span class="required">*</span></label>
                 <select id="field_${h}" class="modal-input modal-select" required>
-                    <option value="">Select unit...</option>
-                    ${units.map(u => `<option value="${u}">${u}</option>`).join('')}
+                    <option value="">انتخاب واحد...</option>
+                    ${units.map(u => `<option value="${u}">${faLabel(u)}</option>`).join('')}
                 </select>
             `;
         } else {
             // Regular text input
             inputHtml = `
-                <label for="field_${h}">${h} <span class="required">*</span></label>
+                <label for="field_${h}">${faLabel(h)} <span class="required">*</span></label>
                 <input type="text" 
                        id="field_${h}" 
                        class="modal-input" 
-                       placeholder="Enter ${h}" 
+                       placeholder="ورود ${faLabel(h)}" 
                        required>
             `;
         }
@@ -782,7 +782,7 @@ function submitNewRow() {
     });
     
     if (hasError) {
-        alert("Please fill all fields correctly. All fields are required.");
+        alert("Please fill all fields correctly. همه fields are required.");
         return;
     }
     
@@ -793,7 +793,7 @@ function submitNewRow() {
 }
 
 function removeRow(i) {
-    const confirmed = confirm(`Delete row ${i + 1}? This action cannot be undone.`);
+    const confirmed = confirm(`ردیف ${i + 1} حذف شود؟ این عملیات قابل بازگشت نیست.`);
     if (!confirmed) return;
     
     rows.splice(i, 1);
@@ -830,7 +830,7 @@ function buildColumnData() {
 }
 
 function saveTable() {
-    const confirmed = confirm("Save all changes to the table?");
+    const confirmed = confirm("ذخیره all changes to the table?");
     if (!confirmed) return;
     
     const payload = buildColumnData();
@@ -841,7 +841,7 @@ function saveTable() {
     // Show loading state
     const saveBtn = document.getElementById("saveBtn");
     const originalHTML = saveBtn.innerHTML;
-    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال ذخیره...';
     saveBtn.disabled = true;
     
     console.log("Saving payload with metadata:", {
@@ -871,12 +871,12 @@ function saveTable() {
         }
     })
     .then(data => {
-        console.log("Save successful:", data);
-        alert(`✅ Table saved successfully!\n\nLast modified: ${new Date(lastModificationDate).toLocaleString()}`);
+        console.log("ذخیره successful:", data);
+        alert(`✅ جدول با موفقیت ذخیره شد!\n\nآخرین ویرایش: ${new Date(lastModificationDate).toLocaleString()}`);
     })
     .catch(err => {
         console.error("SAVE ERROR:", err);
-        alert("❌ Save failed. Please check the console (F12) for details.\n\nError: " + err.message);
+        alert("❌ ذخیره ناموفق بود. لطفاً جزئیات را در کنسول (F12) بررسی کنید.\n\nخطا: " + err.message);
     })
     .finally(() => {
         saveBtn.innerHTML = originalHTML;

@@ -11,6 +11,29 @@ body {
     overflow-x: hidden;
 }
 
+
+/* Persian / RTL defaults */
+html, body {
+    direction: rtl;
+    text-align: right;
+}
+
+body {
+    font-family: Tahoma, "Segoe UI", Arial, sans-serif;
+}
+
+input, textarea, select, button {
+    font-family: inherit;
+}
+
+.text-end {
+    text-align: left !important;
+}
+
+.nav-link:hover {
+    transform: translateX(-5px);
+}
+
 /* App wrapper */
 .app-wrapper {
     min-height: 100vh;
@@ -40,10 +63,11 @@ body {
     .sidebar {
         position: fixed;
         top: 0;
-        left: 0;
+        right: 0;
+        left: auto;
         height: 100%;
-        transform: translateX(-100%);
-        box-shadow: 2px 0 10px rgba(0,0,0,0.2);
+        transform: translateX(100%);
+        box-shadow: -2px 0 10px rgba(0,0,0,0.2);
     }
     
     .sidebar.show {
@@ -213,7 +237,7 @@ body.sidebar-open {
     }
     
     .main-content {
-        margin-left: 0 !important;
+        margin-right: 0 !important;
         padding: 0 !important;
     }
     

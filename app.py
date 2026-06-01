@@ -8,11 +8,13 @@ from modules.general_parameters.routes import general_parameters_bp
 from modules.factory_parameters.routes import factory_parameters_bp
 from modules.cost_calculation.routes import cost_calculation_bp
 import secrets
+from utils.i18n import TRANSLATIONS, fa
 
 
 app = Flask(__name__)
 # app.secret_key = secrets.token_hex()
 app.secret_key = "WILL BE CHANGED TO UPPER"
+app.jinja_env.filters["fa"] = fa
 
 
 # register blueprints
@@ -31,12 +33,14 @@ def inject_user():
     except:
         user = None
     return {
-        "user": user
+        "user": user,
+        "translations": TRANSLATIONS,
+        "fa": fa
     }
 
 @app.route("/")
 def home():
-    return redirect(url_for("login"))
+    return redirect(url_for("auth.login"))
     
 
 if __name__ == "__main__":
@@ -58,7 +62,7 @@ if __name__ == "__main__":
 #     def decorated_function(*args, **kwargs):
 
 #         if "user" not in session:
-#             return redirect(url_for("login"))
+#             return redirect(url_for("auth.login"))
 
 #         return f(*args, **kwargs)
 
@@ -67,7 +71,7 @@ if __name__ == "__main__":
 
 # @app.route("/")
 # def home():
-#     return redirect(url_for("login"))
+#     return redirect(url_for("auth.login"))
 
 
 # @app.route("/login", methods=["GET","POST"])
@@ -93,7 +97,7 @@ if __name__ == "__main__":
 # def workdesk():
 
 #     if "user" not in session:
-#         return redirect(url_for("login"))
+#         return redirect(url_for("auth.login"))
 
 #     return render_template("desk/workdesk.html")
 
@@ -127,7 +131,7 @@ if __name__ == "__main__":
 # def logout():
 
 #     session.clear()
-#     return redirect(url_for("login"))
+#     return redirect(url_for("auth.login"))
 
 # if __name__ == '__main__':
 #     app.run(debug=True)

@@ -16,7 +16,7 @@ def login():
             session["user"] = username
             return redirect(url_for("desk.workdesk"))
 
-        flash("Invalid username or password","danger")
+        flash("نام کاربری یا رمز عبور نامعتبر است", "danger")
 
     return render_template("auth/login.html")
 

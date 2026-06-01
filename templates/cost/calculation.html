@@ -1,5 +1,5 @@
 {% extends "base.html" %}{% block content %}
-<!-- <button class="btn btn-secondary mb-3" onclick="history.back()">Back</button> -->
+<!-- <button class="btn btn-secondary mb-3" onclick="history.back()">بازگشت</button> -->
 
     <style>
         * {
@@ -369,31 +369,31 @@
 </head>
 <body>
 <div class="app-container">
-    <button class="btn-secondary" onclick="history.back()">← Back</button>
+    <button class="btn-secondary" onclick="history.back()">بازگشت</button>
 
-    <h2>📦 Product Catalog</h2>
+    <h2>📦 کاتالوگ محصولات</h2>
     
     <!-- Filter Header with Export Button -->
     <div class="filter-header">
         <div class="filter-section">
-            <input id="searchInput" type="text" placeholder="🔍 Search Product Name..." />
+            <input id="searchInput" type="text" placeholder="🔍 جستجوی نام محصول..." />
         </div>
         <button id="exportCSVBtn" class="export-btn">
-            📥 Download CSV Report
+            📥 دریافت گزارش CSV
         </button>
     </div>
     
     <div class="dropdown-filters">
         <div class="dropdown">
-            <button class="dropbtn">🏭 Factory ▾</button>
+            <button class="dropbtn">🏭 کارخانه ▾</button>
             <div class="dropdown-content" id="factoryDropdown"></div>
         </div>
         <div class="dropdown">
-            <button class="dropbtn">📂 Category ▾</button>
+            <button class="dropbtn">📂 دسته‌بندی ▾</button>
             <div class="dropdown-content" id="categoryDropdown"></div>
         </div>
         <div class="dropdown">
-            <button class="dropbtn">📁 Subcategory ▾</button>
+            <button class="dropbtn">📁 زیردسته ▾</button>
             <div class="dropdown-content" id="subcategoryDropdown"></div>
         </div>
         <div id="filterStats" class="filter-stats"></div>
@@ -402,34 +402,34 @@
     <div class="table-wrapper">
         <table id="productTable">
             <thead>
-                <tr><th>Product Name</th><th>Factory</th><th>Category</th><th>Subcategory</th><th>Select</th></tr>
+                <tr><th>نام محصول</th><th>کارخانه</th><th>دسته‌بندی</th><th>زیردسته</th><th>انتخاب</th></tr>
             </thead>
             <tbody id="tableBody"></tbody>
         </table>
     </div>
     <div class="pagination">
-        <button id="prevPage">◀ Previous</button>
+        <button id="prevPage">قبلی</button>
         <span id="pageInfo"></span>
-        <button id="nextPage">Next ▶</button>
+        <button id="nextPage">بعدی</button>
     </div>
 
     <!-- COST CALCULATION SECTION with 7 specific steps -->
     <div class="calculation-area">
         <div class="calc-header">
-            <h3>💰 Total Cost Breakdown</h3>
-            <div class="selected-product-badge" id="selectedProductLabel">No product selected</div>
+            <h3>💰 تفکیک بهای کل</h3>
+            <div class="selected-product-badge" id="selectedProductLabel">محصولی انتخاب نشده است</div>
         </div>
         <div class="total-cost-card">
-            <span class="total-label">🏁 Total Calculated Cost (per unit)</span>
+            <span class="total-label">🏁 بهای محاسبه‌شده کل (برای هر واحد)</span>
             <span class="total-value" id="totalCostDisplay">$0.00</span>
         </div>
         <div class="step-container">
-            <div class="step-title">⚙️ Step‑by‑step cost components</div>
+            <div class="step-title">⚙️ اجزای بها به‌صورت مرحله‌ای</div>
             <div id="stepsContainer" class="steps-list">
-                <div class="empty-selection">✨ Select a product from the table above to see detailed cost structure based on:<br> • Raw Material<br> • Payroll<br> • Overhead<br> • Depreciation<br> • Administrative & Research<br> • Financial Costs<br> • Non-Operational Costs & Incomes</div>
+                <div class="empty-selection">✨ برای مشاهده ساختار تفصیلی بها، یک محصول را از جدول بالا انتخاب کنید:<br> • مواد اولیه<br> • حقوق و دستمزد<br> • سربار<br> • استهلاک<br> • اداری و پژوهشی<br> • هزینه‌های مالی<br> • هزینه‌ها و درآمدهای غیرعملیاتی</div>
             </div>
         </div>
-        <div class="helper-note">💡 Each cost component is calculated dynamically based on product attributes (factory, category, subcategory). Click "Download CSV Report" to export ALL filtered products with their complete cost breakdown.</div>
+        <div class="helper-note">💡 هر جزء بها بر اساس ویژگی‌های محصول (کارخانه، دسته‌بندی و زیردسته) به‌صورت پویا محاسبه می‌شود. برای خروجی گرفتن از همه محصولات فیلترشده همراه با تفکیک کامل بها، روی «دریافت گزارش CSV» کلیک کنید.</div>
     </div>
 </div>
 
@@ -575,11 +575,11 @@
         container.innerHTML = "";
         const uniqueVals = [...new Set(tableData.map(x => x[columnName] || ""))].filter(v => v !== "").sort();
         const allDiv = document.createElement("div");
-        allDiv.innerHTML = `<label><input type="checkbox" class="filter-checkbox" data-column="${columnName}" data-value="__all__" checked> ✅ All</label>`;
+        allDiv.innerHTML = `<label><input type="checkbox" class="filter-checkbox" data-column="${columnName}" data-value="__all__" checked> ✅ همه</label>`;
         container.appendChild(allDiv);
         uniqueVals.forEach(val => {
             const div = document.createElement("div");
-            div.innerHTML = `<label><input type="checkbox" class="filter-checkbox" data-column="${columnName}" data-value="${escapeHtml(val)}"> ${escapeHtml(val)}</label>`;
+            div.innerHTML = `<label><input type="checkbox" class="filter-checkbox" data-column="${columnName}" data-value="${escapeHtml(faLabel(val))}"> ${escapeHtml(faLabel(val))}</label>`;
             container.appendChild(div);
         });
     }
@@ -603,13 +603,13 @@
     function updateFilterStats() {
         const filtered = getFilteredData();
         const totalProducts = tableData.length;
-        filterStatsSpan.textContent = `📊 Showing ${filtered.length} of ${totalProducts} products`;
+        filterStatsSpan.textContent = `📊 نمایش ${filtered.length} از ${totalProducts} محصول`;
     }
     
     function renderTable() {
         if (!tbody) return;
         if (!hasData) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:40px;">⚠️ No product data available. Check JSON format.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:40px;">⚠️ داده محصول موجود نیست. قالب JSON را بررسی کنید.</td></tr>';
             return;
         }
         const filtered = getFilteredData();
@@ -619,26 +619,26 @@
         const pageRows = filtered.slice(start, end);
         tbody.innerHTML = "";
         if (pageRows.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:40px;">✨ No products match filters</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:40px;">✨ هیچ محصولی با فیلترها مطابقت ندارد</td></tr>';
         } else {
             pageRows.forEach(row => {
                 const tr = document.createElement("tr");
-                const productName = escapeHtml(row.Product_Name || "");
-                const factory = escapeHtml(row.Factory || "");
-                const category = escapeHtml(row.Category || "");
-                const subcategory = escapeHtml(row.Subcategory || "");
+                const productName = escapeHtml(faLabel(row.Product_Name || ""));
+                const factory = escapeHtml(faLabel(row.Factory || ""));
+                const category = escapeHtml(faLabel(row.Category || ""));
+                const subcategory = escapeHtml(faLabel(row.Subcategory || ""));
                 const productDataAttr = escapeHtml(JSON.stringify(row));
                 tr.innerHTML = `
                     <td>${productName}</td>
                     <td>${factory}</td>
                     <td>${category}</td>
                     <td>${subcategory}</td>
-                    <td><button class="open-btn" data-product='${productDataAttr}'>💰 Calculate Cost</button></td>
+                    <td><button class="open-btn" data-product='${productDataAttr}'>💰 محاسبه بها</button></td>
                 `;
                 tbody.appendChild(tr);
             });
         }
-        document.querySelectorAll(".open-btn").forEach(btn => {
+        document.queryانتخابorهمه(".open-btn").forEach(btn => {
             btn.addEventListener("click", (e) => {
                 try {
                     const productRaw = btn.getAttribute("data-product");
@@ -650,7 +650,7 @@
             });
         });
         const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
-        pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+        pageInfo.textContent = faPage(currentPage, totalPages);
     }
     
     // =============== CSV EXPORT FUNCTION ===============
@@ -658,24 +658,24 @@
         const filteredProducts = getFilteredData();
         
         if (filteredProducts.length === 0) {
-            alert("⚠️ No products to export. Please adjust your filters.");
+            alert("⚠️ محصولی برای خروجی گرفتن وجود ندارد. لطفاً فیلترها را تغییر دهید.");
             return;
         }
         
         // Prepare CSV headers
         const headers = [
-            "Product Name",
-            "Factory",
-            "Category", 
-            "Subcategory",
-            "Total Cost (per unit)",
-            "Raw Material",
-            "Payroll",
-            "Overhead",
-            "Depreciation",
-            "Administrative & Research",
-            "Financial Costs",
-            "Non-Operational Costs & Incomes"
+            "نام محصول",
+            "کارخانه",
+            "دسته‌بندی", 
+            "زیردسته",
+            "بهای کل (برای هر واحد)",
+            "مواد اولیه",
+            "حقوق و دستمزد",
+            "سربار",
+            "استهلاک",
+            "اداری و پژوهشی",
+            "هزینه‌های مالی",
+            "هزینه‌ها و درآمدهای غیرعملیاتی"
         ];
         
         // Build CSV rows
@@ -733,7 +733,7 @@
         URL.revokeObjectURL(url);
         
         // Show success message
-        alert(`✅ Exported ${filteredProducts.length} products to CSV!\nFilename: ${filename}`);
+        alert(`✅ از ${filteredProducts.length} محصول خروجی CSV گرفته شد!\nنام فایل: ${filename}`);
     }
     
     function initFilters() { 
@@ -750,9 +750,9 @@
         let val = e.target.dataset.value;
         if (val === "__all__") {
             filters[col] = [];
-            document.querySelectorAll(`input[data-column="${col}"]`).forEach(cb => cb.checked = (cb.dataset.value === "__all__"));
+            document.queryانتخابorهمه(`input[data-column="${col}"]`).forEach(cb => cb.checked = (cb.dataset.value === "__all__"));
         } else {
-            const allBox = document.querySelector(`input[data-column="${col}"][data-value="__all__"]`);
+            const allBox = document.queryانتخابor(`input[data-column="${col}"][data-value="__all__"]`);
             if (allBox) allBox.checked = false;
             if (filters[col].includes(val)) filters[col] = filters[col].filter(v => v !== val);
             else filters[col].push(val);
@@ -774,26 +774,26 @@
     
     function updateCostCalculation(product) {
         if (!product || !product.Product_Name) {
-            selectedProductLabel.innerText = "No product selected";
+            selectedProductLabel.innerText = "محصولی انتخاب نشده است";
             totalCostDisplay.innerText = "$0.00";
-            stepsContainer.innerHTML = `<div class="empty-selection">✨ Select a product to see detailed 7-step cost breakdown:<br> • Raw Material<br> • Payroll<br> • Overhead<br> • Depreciation<br> • Administrative & Research<br> • Financial Costs<br> • Non-Operational Costs & Incomes</div>`;
+            stepsContainer.innerHTML = `<div class="empty-selection">✨ برای مشاهده تفکیک ۷ مرحله‌ای بها، یک محصول انتخاب کنید:<br> • مواد اولیه<br> • حقوق و دستمزد<br> • سربار<br> • استهلاک<br> • اداری و پژوهشی<br> • هزینه‌های مالی<br> • هزینه‌ها و درآمدهای غیرعملیاتی</div>`;
             return;
         }
         
-        selectedProductLabel.innerText = `✅ ${product.Product_Name} | ${product.Factory || "Factory"} | ${product.Category || "Category"}`;
+        selectedProductLabel.innerText = `✅ ${faLabel(product.Product_Name)} | ${faLabel(product.Factory || "کارخانه")} | ${faLabel(product.Category || "دسته‌بندی")}`;
         const costs = getSevenStepCostStructure(product);
         
         totalCostDisplay.innerText = `$${costs.total.toFixed(2)}`;
         
         const stepsHtml = `
-            <li class="step-item"><span class="step-desc"><span class="step-icon">🧱</span><strong>Raw Material</strong><span style="font-size:0.75rem; color:#5c6f87; margin-left:6px;">Direct materials & components</span></span><span class="step-cost">$${costs.rawMaterial.toFixed(2)}</span></li>
-            <li class="step-item"><span class="step-desc"><span class="step-icon">👥</span><strong>Payroll</strong><span style="font-size:0.75rem; color:#5c6f87; margin-left:6px;">Direct & indirect labor</span></span><span class="step-cost">$${costs.payroll.toFixed(2)}</span></li>
-            <li class="step-item"><span class="step-desc"><span class="step-icon">⚡</span><strong>Overhead</strong><span style="font-size:0.75rem; color:#5c6f87; margin-left:6px;">Utilities, maintenance, facility</span></span><span class="step-cost">$${costs.overhead.toFixed(2)}</span></li>
-            <li class="step-item"><span class="step-desc"><span class="step-icon">🏭</span><strong>Depreciation</strong><span style="font-size:0.75rem; color:#5c6f87; margin-left:6px;">Machinery & equipment amortization</span></span><span class="step-cost">$${costs.depreciation.toFixed(2)}</span></li>
-            <li class="step-item"><span class="step-desc"><span class="step-icon">📋</span><strong>Administrative & Research</strong><span style="font-size:0.75rem; color:#5c6f87; margin-left:6px;">R&D, admin, quality systems</span></span><span class="step-cost">$${costs.adminResearch.toFixed(2)}</span></li>
-            <li class="step-item"><span class="step-desc"><span class="step-icon">💰</span><strong>Financial Costs</strong><span style="font-size:0.75rem; color:#5c6f87; margin-left:6px;">Interest, banking, financing</span></span><span class="step-cost">$${costs.financialCosts.toFixed(2)}</span></li>
-            <li class="step-item"><span class="step-desc"><span class="step-icon">📈</span><strong>Non-Operational Costs & Incomes</strong><span style="font-size:0.75rem; color:#5c6f87; margin-left:6px;">Currency adjustments, extraordinary items</span></span><span class="step-cost">$${costs.nonOperational.toFixed(2)}</span></li>
-            <li class="step-item total-step"><span class="step-desc"><span class="step-icon">🏁</span><strong>TOTAL COST (per unit)</strong></span><span class="step-cost" style="background:#2c7da0; color:white;">$${costs.total.toFixed(2)}</span></li>
+            <li class="step-item"><span class="step-desc"><span class="step-icon">🧱</span><strong>مواد اولیه</strong><span style="font-size:0.75rem; color:#5c6f87; margin-left:6px;">مواد و اجزای مستقیم</span></span><span class="step-cost">$${costs.rawMaterial.toFixed(2)}</span></li>
+            <li class="step-item"><span class="step-desc"><span class="step-icon">👥</span><strong>حقوق و دستمزد</strong><span style="font-size:0.75rem; color:#5c6f87; margin-left:6px;">دستمزد مستقیم و غیرمستقیم</span></span><span class="step-cost">$${costs.payroll.toFixed(2)}</span></li>
+            <li class="step-item"><span class="step-desc"><span class="step-icon">⚡</span><strong>سربار</strong><span style="font-size:0.75rem; color:#5c6f87; margin-left:6px;">خدمات، نگهداری، تأسیسات</span></span><span class="step-cost">$${costs.overhead.toFixed(2)}</span></li>
+            <li class="step-item"><span class="step-desc"><span class="step-icon">🏭</span><strong>استهلاک</strong><span style="font-size:0.75rem; color:#5c6f87; margin-left:6px;">استهلاک ماشین‌آلات و تجهیزات</span></span><span class="step-cost">$${costs.depreciation.toFixed(2)}</span></li>
+            <li class="step-item"><span class="step-desc"><span class="step-icon">📋</span><strong>اداری و پژوهشی</strong><span style="font-size:0.75rem; color:#5c6f87; margin-left:6px;">پژوهش، اداری، نظام‌های کیفیت</span></span><span class="step-cost">$${costs.adminResearch.toFixed(2)}</span></li>
+            <li class="step-item"><span class="step-desc"><span class="step-icon">💰</span><strong>هزینه‌های مالی</strong><span style="font-size:0.75rem; color:#5c6f87; margin-left:6px;">بهره، بانکداری، تأمین مالی</span></span><span class="step-cost">$${costs.financialCosts.toFixed(2)}</span></li>
+            <li class="step-item"><span class="step-desc"><span class="step-icon">📈</span><strong>هزینه‌ها و درآمدهای غیرعملیاتی</strong><span style="font-size:0.75rem; color:#5c6f87; margin-left:6px;">تعدیلات ارزی، اقلام غیرعادی</span></span><span class="step-cost">$${costs.nonOperational.toFixed(2)}</span></li>
+            <li class="step-item total-step"><span class="step-desc"><span class="step-icon">🏁</span><strong>بهای کل (برای هر واحد)</strong></span><span class="step-cost" style="background:#2c7da0; color:white;">$${costs.total.toFixed(2)}</span></li>
         `;
         stepsContainer.innerHTML = `<ul class="steps-list">${stepsHtml}</ul>`;
     }
@@ -803,8 +803,8 @@
         initFilters();
         renderTable();
     } else {
-        if(tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:40px; color:#c0392b;">⚠️ No data received. Ensure table_json is properly passed.</td></tr>';
-        stepsContainer.innerHTML = `<div class="empty-selection">⚠️ Product data not available.</div>`;
+        if(tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:40px; color:#c0392b;">⚠️ داده‌ای دریافت نشد. از ارسال صحیح table_json مطمئن شوید.</td></tr>';
+        stepsContainer.innerHTML = `<div class="empty-selection">⚠️ داده محصول در دسترس نیست.</div>`;
     }
     updateCostCalculation(null);
 </script>
