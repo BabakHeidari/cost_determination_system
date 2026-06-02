@@ -139,7 +139,7 @@ const units = [
 ];
 
 // ===== DATA FROM FLASK =====
-const tableJSON = {{ table_json | safe }};
+const tableJSON = {{ table_json | tojson }};
 
 // headers follow _order exactly
 let headers = [...tableJSON._order];
@@ -500,7 +500,7 @@ function getFiltered() {
         }
         
         // Only apply filters to columns that have active filters
-        for (let c از Object.keys(filters)) {
+        for (let c of Object.keys(filters)) {
             const active = filters[c];
             if (active && active.length > 0 && !active.includes(r[c])) {
                 return false;

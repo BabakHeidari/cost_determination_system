@@ -437,7 +437,7 @@
     // ============================================================
     // DATA DIRECTLY FROM FLASK BACKEND
     // ============================================================
-    const tableJSON = {{ table_json | safe }};
+    const tableJSON = {{ table_json | tojson }};
     
     // Convert column-oriented JSON to row array
     function jsonToRows(jsonObj) {
