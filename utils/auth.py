@@ -20,7 +20,7 @@ def login_required(f):
 
 def authenticate(username:str, password:str):
 
-    auth_data_path = str(parent_path)+r"\Overall\auth_data"
+    auth_data_path = str(parent_path / "Overall" / "auth_data")
     auth_data = pd.read_excel(auth_data_path+".xlsx")
     user_data = auth_data[auth_data["username"] == username.lower()]
     # password = password.removeprefix
@@ -47,7 +47,7 @@ def accounter():
     username = input("Enter the username:\n").lower()
     password = hashlib.sha256(input("Enter the password:\n").encode("utf-8")).hexdigest()
     role = input("What role would you considered for him/her: admin or user\n")
-    auth_data_path = str(parent_path)+r"\Overall\auth_data"
+    auth_data_path = str(parent_path / "Overall" / "auth_data")
     auth_data = pd.read_excel(auth_data_path+".xlsx")
     auth_data.loc[len(auth_data)] = [username, password, role]
     auth_data.to_excel(auth_data_path+".xlsx", index=False)
