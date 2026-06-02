@@ -6,6 +6,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const addRowBtn = document.getElementById("add_row");
     const grandTotalEl = document.getElementById("grand_total");
 
+    if (!table || !addRowBtn || !grandTotalEl) {
+        return;
+    }
+
     function recalcTotals() {
         let grandTotal = 0;
         table.querySelectorAll("tbody tr").forEach(row => {

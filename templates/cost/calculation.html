@@ -579,7 +579,7 @@
         container.appendChild(allDiv);
         uniqueVals.forEach(val => {
             const div = document.createElement("div");
-            div.innerHTML = `<label><input type="checkbox" class="filter-checkbox" data-column="${columnName}" data-value="${escapeHtml(faLabel(val))}"> ${escapeHtml(faLabel(val))}</label>`;
+            div.innerHTML = `<label><input type="checkbox" class="filter-checkbox" data-column="${columnName}" data-value="${escapeHtml(val)}"> ${escapeHtml(faLabel(val))}</label>`;
             container.appendChild(div);
         });
     }
