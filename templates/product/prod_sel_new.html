@@ -5,7 +5,7 @@
     <!-- Header Section -->
     <div class="header-section">
         <button class="btn-back" onclick="history.back()">
-            <span class="back-icon">←</span> Back
+            <span class="back-icon">←</span> بازگشت
         </button>
         <h1 class="page-title">Product Management</h1>
     </div>
@@ -15,13 +15,13 @@
         <div class="card-header">
             <div class="header-left">
                 <h2 class="section-title">
-                    <span class="icon-grid">⊞</span> Product Table
+                    <span class="icon-grid">⊞</span> جدول محصولات
                 </h2>
                 <span class="badge-count" id="productCount">0 products</span>
             </div>
             <div class="header-right">
                 <button class="btn-add-product" onclick="openAddProductModal()">
-                    <span class="btn-icon">+</span> Add New Product
+                    <span class="btn-icon">+</span> افزودن محصول جدید
                 </button>
             </div>
         </div>
@@ -30,33 +30,33 @@
         <div class="filters-panel">
             <div class="search-box">
                 <span class="search-icon">🔍</span>
-                <input id="searchInput" type="text" placeholder="Search by product name..." />
+                <input id="searchInput" type="text" placeholder="جستجو بر اساس نام محصول..." />
                 <button class="btn-clear-search" id="clearSearch" style="display:none;">✕</button>
             </div>
 
             <div class="dropdown-filters">
-                <!-- Factory -->
+                <!-- کارخانه -->
                 <div class="dropdown">
                     <button class="dropbtn">
-                        <span class="filter-icon">🏭</span> Factory <span class="arrow">▾</span>
+                        <span class="filter-icon">🏭</span> کارخانه <span class="arrow">▾</span>
                         <span class="filter-count" id="factoryCount"></span>
                     </button>
                     <div class="dropdown-content" id="factoryDropdown"></div>
                 </div>
 
-                <!-- Category -->
+                <!-- دسته‌بندی -->
                 <div class="dropdown">
                     <button class="dropbtn">
-                        <span class="filter-icon">📂</span> Category <span class="arrow">▾</span>
+                        <span class="filter-icon">📂</span> دسته‌بندی <span class="arrow">▾</span>
                         <span class="filter-count" id="categoryCount"></span>
                     </button>
                     <div class="dropdown-content" id="categoryDropdown"></div>
                 </div>
 
-                <!-- Subcategory -->
+                <!-- زیردسته -->
                 <div class="dropdown">
                     <button class="dropbtn">
-                        <span class="filter-icon">📁</span> Subcategory <span class="arrow">▾</span>
+                        <span class="filter-icon">📁</span> زیردسته <span class="arrow">▾</span>
                         <span class="filter-count" id="subcategoryCount"></span>
                     </button>
                     <div class="dropdown-content" id="subcategoryDropdown"></div>
@@ -73,10 +73,10 @@
                 <thead>
                     <tr>
                         <th width="5%">#</th>
-                        <th width="25%">Product Name</th>
-                        <th width="20%">Factory</th>
-                        <th width="20%">Category</th>
-                        <th width="20%">Subcategory</th>
+                        <th width="25%">نام محصول</th>
+                        <th width="20%">کارخانه</th>
+                        <th width="20%">دسته‌بندی</th>
+                        <th width="20%">زیردسته</th>
                         <th width="10%">Action</th>
                     </tr>
                 </thead>
@@ -84,20 +84,20 @@
             </table>
             <div class="empty-state" id="emptyState" style="display:none;">
                 <div class="empty-icon">📦</div>
-                <h3>No products found</h3>
-                <p>Try adjusting your search or filter criteria</p>
+                <h3>محصولی پیدا نشد</h3>
+                <p>معیارهای جستجو یا فیلتر را تغییر دهید</p>
             </div>
         </div>
 
         <!-- Pagination -->
         <div class="pagination-wrapper">
             <div class="pagination-info">
-                Showing <span id="showingStart">0</span>-<span id="showingEnd">0</span> of <span id="totalResults">0</span> results
+                نمایش <span id="showingStart">0</span>-<span id="showingEnd">0</span> از <span id="totalResults">0</span> نتیجه
             </div>
             <div class="pagination">
-                <button id="prevPage" class="btn-page">← Previous</button>
+                <button id="prevPage" class="btn-page">قبلی</button>
                 <div class="page-numbers" id="pageNumbers"></div>
-                <button id="nextPage" class="btn-page">Next →</button>
+                <button id="nextPage" class="btn-page">بعدی</button>
             </div>
         </div>
     </div>
@@ -107,30 +107,30 @@
 <div class="modal-overlay" id="addProductModal">
     <div class="modal-dialog">
         <div class="modal-header">
-            <h3>Add New Product</h3>
+            <h3>افزودن محصول جدید</h3>
             <button class="btn-close-modal" onclick="closeAddProductModal()">✕</button>
         </div>
         <div class="modal-body">
             <form id="addProductForm">
                 <div class="form-group">
-                    <label for="newProductName">Product Name *</label>
-                    <input type="text" id="newProductName" required placeholder="Enter product name">
+                    <label for="newProductName">نام محصول *</label>
+                    <input type="text" id="newProductName" required placeholder="نام محصول را وارد کنید">
                 </div>
                 <div class="form-group">
-                    <label for="newFactory">Factory *</label>
-                    <input type="text" id="newFactory" required placeholder="Enter factory name">
+                    <label for="newFactory">کارخانه *</label>
+                    <input type="text" id="newFactory" required placeholder="نام کارخانه را وارد کنید">
                 </div>
                 <div class="form-group">
-                    <label for="newCategory">Category *</label>
-                    <input type="text" id="newCategory" required placeholder="Enter category">
+                    <label for="newCategory">دسته‌بندی *</label>
+                    <input type="text" id="newCategory" required placeholder="دسته‌بندی را وارد کنید">
                 </div>
                 <div class="form-group">
-                    <label for="newSubcategory">Subcategory</label>
-                    <input type="text" id="newSubcategory" placeholder="Enter subcategory">
+                    <label for="newSubcategory">زیردسته</label>
+                    <input type="text" id="newSubcategory" placeholder="زیردسته را وارد کنید">
                 </div>
                 <div class="form-actions">
-                    <button type="button" class="btn-cancel" onclick="closeAddProductModal()">Cancel</button>
-                    <button type="submit" class="btn-save">Save Product</button>
+                    <button type="button" class="btn-cancel" onclick="closeAddProductModal()">انصراف</button>
+                    <button type="submit" class="btn-save">ذخیره محصول</button>
                 </div>
             </form>
         </div>
@@ -139,7 +139,7 @@
 
 <script>
 // JSON data passed from Flask
-const rawData = {{ table_json | safe }};
+const rawData = {{ table_json | tojson }};
 
 // Convert JSON columns → row objects
 function jsonToRowData(jsonObj) {
@@ -183,7 +183,7 @@ function buildDropdown(id, columnName) {
     const container = document.getElementById(id);
     const uniqueVals = [...new Set(tableData.map(x => x[columnName]))].sort();
 
-    // "All" option
+    // "همه" option
     const allDiv = document.createElement("div");
     allDiv.className = "dropdown-item";
     allDiv.innerHTML = `
@@ -193,7 +193,7 @@ function buildDropdown(id, columnName) {
                    data-value="__all__"
                    checked>
             <span class="checkmark"></span>
-            All
+            همه
         </label>
     `;
     container.appendChild(allDiv);
@@ -208,7 +208,7 @@ function buildDropdown(id, columnName) {
                        data-column="${columnName}" 
                        data-value="${val}">
                 <span class="checkmark"></span>
-                ${val}
+                ${faLabel(val)}
             </label>
         `;
         container.appendChild(div);
@@ -352,15 +352,15 @@ function renderTable() {
         tr.innerHTML = `
             <td>${globalIndex}</td>
             <td class="product-name">${row.Product_Name}</td>
-            <td>${row.Factory}</td>
-            <td>${row.Category}</td>
-            <td>${row.Subcategory}</td>
+            <td>${faLabel(row.Factory)}</td>
+            <td>${faLabel(row.Category)}</td>
+            <td>${faLabel(row.Subcategory)}</td>
             <td>
                 <form method="POST" action="/product/${encodeURIComponent(row.Product_Name)}" style="margin:0;">
                     <input type="hidden" name="factory" value="${row.Factory}">
                     <input type="hidden" name="category" value="${row.Category}">
                     <input type="hidden" name="subcategory" value="${row.Subcategory}">
-                    <button type="submit" class="btn-view">View</button>
+                    <button type="submit" class="btn-view">مشاهده</button>
                 </form>
             </td>
         `;
@@ -471,16 +471,16 @@ document.getElementById("addProductForm").addEventListener("submit", function(e)
     tableData.push(newProduct);
     
     // Refresh dropdowns and table
-    refreshAllDropdowns();
+    refreshهمهDropdowns();
     closeAddProductModal();
     renderTable();
     
     // Show success message
-    showNotification("Product added successfully!", "success");
+    showNotification("محصول با موفقیت افزوده شد!", "success");
 });
 
 // Refresh all dropdown filters
-function refreshAllDropdowns() {
+function refreshهمهDropdowns() {
     ["factoryDropdown", "categoryDropdown", "subcategoryDropdown"].forEach(id => {
         document.getElementById(id).innerHTML = "";
     });
@@ -865,7 +865,7 @@ renderTable();
     color: #666;
 }
 
-/* View Button */
+/* مشاهده Button */
 .btn-view {
     background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
     color: white;

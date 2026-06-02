@@ -1,11 +1,8 @@
 <nav class="navbar navbar-light bg-light border-bottom px-4">
-<div><span id="welcomeMessage">Welcome, {{user}}</span></div>
-<div class="d-flex gap-4">
-<div><small>Last login:</small> <span id="lastLogin">2026-04-21</span></div>
-<div><small>Time:</small> <span id="currentTime"></span>
-<a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger btn-sm">
-Logout
-</a>
-</div>
-</div>
+    <div><span id="welcomeMessage">خوش آمدید، {{ user or "کاربر" }}</span></div>
+    <div class="d-flex gap-4 align-items-center">
+        <div><small>آخرین ورود:</small> <span id="lastLogin">۲۰۲۶-۰۴-۲۱</span></div>
+        <div><small>زمان:</small> <span id="currentTime"></span></div>
+        <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger btn-sm">خروج</a>
+    </div>
 </nav>

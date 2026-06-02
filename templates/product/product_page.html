@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 {% block content %}
 
-<button class="btn btn-secondary mb-3" onclick="history.back()">Back</button>
+<button class="btn btn-secondary mb-3" onclick="history.back()">بازگشت</button>
 
 <div class="page-container bom-page">
 
-    <h2>BOM / Recipe for: {{ product_name }}</h2>
+    <h2>لیست مواد / دستور ساخت برای: {{ product_name|fa }}</h2>
 
     <div style="margin-bottom: 20px;">
-        <input type="text" id="searchInput" placeholder="Search in BOM..." style="width: 250px; padding: 6px;">
+        <input type="text" id="searchInput" placeholder="جستجو در لیست مواد..." style="width: 250px; padding: 6px;">
     </div>
 
     <div id="filterContainer" style="margin-bottom: 20px;"></div>
@@ -21,9 +21,9 @@
     </div>
 
     <div style="margin-top: 20px; display:flex; gap:15px;">
-        <button class="btn-primary" id="addColumnBtn">Add Column</button>
-        <button class="btn-primary" id="addRowBtn">Add Row</button>
-        <button class="btn-success" id="saveBtn">Save Changes</button>
+        <button class="btn-primary" id="addColumnBtn">افزودن ستون</button>
+        <button class="btn-primary" id="addRowBtn">افزودن ردیف</button>
+        <button class="btn-success" id="saveBtn">ذخیره تغییرات</button>
     </div>
 
 </div>
@@ -194,7 +194,7 @@ td .delete-btn {
 
 
 <script>
-    const productName = "{{ product_name }}";
+    const productName = "{{ product_name|fa }}";
     const bomPayload = {{ bom_json | tojson }};
     const headers = bomPayload._order;  // <- exact order from Python
     const originalBOM = bomPayload.data;
@@ -250,7 +250,7 @@ td .delete-btn {
 
             const headerText = document.createElement("span");
             headerText.contentEditable = "false";
-            headerText.innerText = h;
+            headerText.innerText = faLabel(h);
             th.appendChild(headerText);
 
             if (!["materials", "unit"].includes(h)) {
@@ -263,7 +263,10 @@ td .delete-btn {
 
             // Change header name
             headerText.addEventListener("blur", () => {
-                headers[index] = headerText.innerText.trim();
+                const newHeader = headerText.innerText.trim();
+                if (newHeader && newHeader !== faLabel(headers[index])) {
+                    headers[index] = newHeader;
+                }
             });
 
             tableHead.appendChild(th);
@@ -283,7 +286,7 @@ td .delete-btn {
                     materialOptions.forEach(mat => {
                         const opt = document.createElement("option");
                         opt.value = mat;
-                        opt.textContent = mat;
+                        opt.textContent = faLabel(mat);
                         if (row[h] === mat) opt.selected = true;
                         select.appendChild(opt);
                     });
@@ -348,7 +351,7 @@ td .delete-btn {
             const delRowTd = document.createElement("td");
             const delRowBtn = document.createElement("button");
             delRowBtn.className = "delete-btn";
-            delRowBtn.innerText = "Delete Row";
+            delRowBtn.innerText = "حذف ردیف";
             delRowBtn.onclick = () => removeRow(rIndex);
             delRowTd.appendChild(delRowBtn);
 
@@ -411,14 +414,14 @@ td .delete-btn {
             headers.forEach(h => {
                 const td = document.createElement("td");
                 td.contentEditable = "false";
-                td.innerText = row[h] || "";
+                td.innerText = faLabel(row[h] || "");
                 tr.appendChild(td);
             });
 
             const delRowTd = document.createElement("td");
             const delRowBtn = document.createElement("button");
             delRowBtn.className = "delete-btn";
-            delRowBtn.innerText = "Delete Row";
+            delRowBtn.innerText = "حذف ردیف";
             delRowTd.appendChild(delRowBtn);
             tr.appendChild(delRowTd);
 
@@ -432,7 +435,7 @@ td .delete-btn {
     // -------------------- ROW & COLUMN MGMT ----------------------
 
     function addColumn() {
-        const name = prompt("Column name?");
+        const name = prompt("نام ستون؟");
         if (!name) return;
 
         headers.push(name);
@@ -444,7 +447,7 @@ td .delete-btn {
     function removeColumn(idx) {
         const colName = headers[idx];
 
-        if (!confirm(`Are you sure you want to delete the column "${colName}"?\nThis cannot be undone.`)) {
+        if (!confirm(`ستون «${faLabel(colName)}» حذف شود؟\nاین عملیات قابل بازگشت نیست.`)) {
             return;
         }
 
@@ -462,7 +465,7 @@ td .delete-btn {
     }
 
     function removeRow(idx) {
-        if (!confirm("Are you sure you want to delete this row?\nThis cannot be undone.")) {
+        if (!confirm("این ردیف حذف شود؟\nاین عملیات قابل بازگشت نیست.")) {
             return;
         }
 
@@ -493,7 +496,7 @@ td .delete-btn {
 
     function saveBOM() {
 
-    if (!confirm("Save changes to this BOM?\nThis will overwrite existing data.")) {
+    if (!confirm("تغییرات این لیست مواد ذخیره شود؟\nداده‌های قبلی بازنویسی می‌شوند.")) {
         return;
     }
 
@@ -523,11 +526,11 @@ td .delete-btn {
         return r.json();
     })
     .then(() => {
-        alert("BOM saved successfully ✅");
+        alert("لیست مواد با موفقیت ذخیره شد ✅");
     })
     .catch(err => {
         console.error("Error saving BOM:", err);
-        alert("Error saving BOM: " + (err.message || JSON.stringify(err)));
+        alert("خطا در ذخیره لیست مواد: " + (err.message || JSON.stringify(err)));
     });
 }
 

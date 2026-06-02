@@ -1,10 +1,14 @@
-function updateTime(){const now=new Date();const el=document.getElementById('currentTime');if(el){el.innerText=now.toLocaleTimeString();}}setInterval(updateTime,1000);updateTime();
+function updateTime(){const now=new Date();const el=document.getElementById('currentTime');if(el){el.innerText=now.toLocaleTimeString('fa-IR');}}setInterval(updateTime,1000);updateTime();
 
 document.addEventListener("DOMContentLoaded", () => {
 
     const table = document.getElementById("component_table");
     const addRowBtn = document.getElementById("add_row");
     const grandTotalEl = document.getElementById("grand_total");
+
+    if (!table || !addRowBtn || !grandTotalEl) {
+        return;
+    }
 
     function recalcTotals() {
         let grandTotal = 0;
@@ -27,7 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
     addRowBtn.addEventListener("click", () => {
         const newRow = document.createElement("tr");
         newRow.innerHTML = `
-            <td><input type="text" class="form-control" placeholder="Component name"></td>
+            <td><input type="text" class="form-control" placeholder="نام جزء"></td>
             <td><input type="number" class="form-control quantity" min="0"></td>
             <td><input type="number" class="form-control unit_cost" step="0.01" min="0"></td>
             <td class="total_cost text-end">0.00</td>

@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% block content %}
 
-<button class="btn btn-secondary mb-3" onclick="history.back()">Back</button>
+<button class="btn btn-secondary mb-3" onclick="history.back()">بازگشت</button>
 
 <div class="page-container">
 
-<h2>Details of {{factory_name}} Site</h2>
+<h2>جزئیات سایت {{ factory_name|fa }}</h2>
 
 <input id="searchInput" type="text" placeholder="" style="margin-bottom:15px;">
 
@@ -22,9 +22,9 @@
 
 <div style="margin-top:20px; display:flex; gap:15px;">
 <div class="button-bar">
-    <!-- <button class="btn btn-add" id="addColumnBtn">Add Column</button>
-    <button class="btn btn-add" id="addRowBtn">Add Row</button> -->
-    <button class="btn btn-save" id="saveBtn">Save</button>
+    <!-- <button class="btn btn-add" id="addColumnBtn">افزودن ستون</button>
+    <button class="btn btn-add" id="addRowBtn">افزودن ردیف</button> -->
+    <button class="btn btn-save" id="saveBtn">ذخیره</button>
 </div>
 
 </div>
@@ -35,7 +35,7 @@
 <script>
 
 // ===== DATA FROM FLASK =====
-const tableJSON = {{ table_json | safe }};
+const tableJSON = {{ table_json | tojson }};
 
 // headers follow _order exactly
 let headers = [...tableJSON._order];
@@ -67,7 +67,7 @@ let rows = buildRows();
 
 const searchColumn = headers[1];
 
-document.getElementById("searchInput").placeholder = "Search " + searchColumn;
+document.getElementById("searchInput").placeholder = "جستجوی " + faLabel(searchColumn);
 
 
 // ===== FILTER STATE =====
@@ -101,14 +101,15 @@ if([0, 1, 2].includes(i)){
     span.contentEditable=true;
 }
 
-span.innerText=h;
+span.innerText = faLabel(h);
+span.dataset.originalHeader = h;
 
 span.onblur=()=>{
 
 const oldName = headers[i];
 const newName = span.innerText.trim();
 
-if(!newName || oldName === newName) return;
+if(!newName || oldName === newName || newName === faLabel(oldName)) return;
 
 headers[i] = newName;
 
@@ -134,7 +135,7 @@ thead.appendChild(th);
 
 // view column header
 const viewHead = document.createElement("th");
-viewHead.innerText = "View";
+viewHead.innerText = "مشاهده";
 thead.appendChild(viewHead);
 
 
@@ -155,7 +156,7 @@ const dropdown=document.createElement("div");
 dropdown.className="dropdown";
 
 dropdown.innerHTML=`
-<button class="dropbtn">${col} ▾</button>
+<button class="dropbtn">${faLabel(col)} ▾</button>
 <div class="dropdown-content" id="drop_${col}"></div>
 `;
 
@@ -173,7 +174,7 @@ data-col="${col}"
 data-val="__all__"
 class="filter-checkbox"
 checked>
-All
+همه
 </label>`;
 container.appendChild(all);
 
@@ -187,7 +188,7 @@ d.innerHTML=`
 data-col="${col}"
 data-val="${v}"
 class="filter-checkbox">
-${v}
+${faLabel(v)}
 </label>`;
 
 container.appendChild(d);
@@ -284,7 +285,7 @@ headers.forEach(h=>{
 const td=document.createElement("td");
 
 td.contentEditable=false;
-td.innerText=row[h] ?? "";
+td.innerText = faLabel(row[h] ?? "");
 
 td.oninput=()=>{
 row[h]=td.innerText;
@@ -302,10 +303,10 @@ const firstKey = headers[0];
 const firstValue = row[firstKey];
 
 view.innerHTML = `
-<form method="POST" action="/factory_parameters/{{factory_name}}/${encodeURIComponent(firstValue)}" style="margin:0;">
+<form method="POST" action="/factory_parameters/{{ factory_name }}/${encodeURIComponent(firstValue)}" style="margin:0;">
     <input type="hidden" name="${headers[0]}" value="${row[headers[0]]}">
     <input type="hidden" name="${headers[1]}" value="${row[headers[1]] ?? ""}">
-    <button type="submit" class="open-btn">View</button>
+    <button type="submit" class="open-btn">مشاهده</button>
 </form>
 `;
 
@@ -346,7 +347,7 @@ data:data
 
 function saveTable(){
 
-const confirmed = confirm("Save all changes to the table?");
+const confirmed = confirm("همه تغییرات جدول ذخیره شود؟");
 if(!confirmed) return;
 
 const payload = buildColumnData();
@@ -380,11 +381,11 @@ return text;
 })
 .then(data=>{
 console.log("Parsed response:", data);
-alert("Table saved successfully");
+alert("جدول با موفقیت ذخیره شد");
 })
 .catch(err=>{
 console.error("SAVE ERROR:", err);
-alert("Save failed. Open console (F12) to see the exact error.");
+alert("ذخیره ناموفق بود. برای مشاهده خطای دقیق، کنسول (F12) را باز کنید.");
 });
 
 }
